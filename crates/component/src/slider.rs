@@ -63,7 +63,11 @@ impl ThumbRing {
         Self {
             interaction,
             width: THUMB_RING_WIDTH * progress,
-            color: color.alpha(THUMB_RING_OPACITY * progress),
+            color: {
+                let mut color = color;
+                color.alpha *= THUMB_RING_OPACITY * progress;
+                color
+            },
         }
     }
 

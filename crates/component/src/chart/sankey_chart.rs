@@ -3,6 +3,7 @@ use std::{
     rc::Rc,
 };
 
+use gpui::ColorExt as _;
 use gpui::{
     AnyElement, App, Bounds, Corners, ElementId, Hsla, IntoElement, Pixels, Point, SharedString,
     TextAlign, Window, fill, linear_color_stop, linear_gradient, point, prelude::FluentBuilder, px,

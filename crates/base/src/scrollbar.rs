@@ -8,11 +8,11 @@ use crate::{
     theme::ActiveTheme as _,
 };
 use gpui::{
-    Anchor, App, Axis, Background, BorderStyle, Bounds, ContentMask, CursorStyle, Edges, Element,
-    ElementId, EntityId, GlobalElementId, Hitbox, HitboxBehavior, Hsla, InspectorElementId,
-    IntoElement, IsZero, LayoutId, ListState, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
-    PaintQuad, Pixels, Point, Position, ScrollHandle, ScrollWheelEvent, Size, Style,
-    TouchDragEvent, TouchPhase, UniformListScrollHandle, Window, fill, point,
+    Anchor, App, Axis, Background, BorderStyle, Bounds, ColorExt as _, ContentMask, CursorStyle,
+    Edges, Element, ElementId, EntityId, GlobalElementId, Hitbox, HitboxBehavior, Hsla,
+    InspectorElementId, IntoElement, IsZero, LayoutId, ListState, MouseDownEvent, MouseMoveEvent,
+    MouseUpEvent, PaintQuad, Pixels, Point, Position, ScrollHandle, ScrollWheelEvent, Size, Style,
+    TouchEvent, TouchPhase, UniformListScrollHandle, Window, fill, point,
     prelude::FluentBuilder, px, relative, size,
 };
 use schemars::JsonSchema;
@@ -1028,7 +1028,9 @@ impl Scrollbar {
     /// explicit `ScrollbarStyles` still wins: this is the bottom of the
     /// cascade, not a new top of it.
     fn thumb_default_background(cx: &App, alpha: f32) -> Background {
-        cx.theme().tokens.colors.foreground.alpha(alpha).into()
+        let mut color = cx.theme().tokens.colors.foreground;
+        color.alpha = alpha.clamp(0., 1.);
+        color.into()
     }
 
     fn thumb_defaults(
@@ -1661,21 +1663,21 @@ impl Element for Scrollbar {
                         let state = scrollbar_state.clone();
                         let scroll_handle = self.scroll_handle.clone();
                         let max_fps_duration = Duration::from_secs_f64(1. / self.max_fps as f64);
-                        move |event: &TouchDragEvent, phase, window, cx| {
+                        move |event: &TouchEvent, phase, window, cx| {
                             if !phase.bubble() {
                                 return;
                             }
                             if event.phase == TouchPhase::Started {
                                 if !is_visible
                                     || window.default_prevented()
-                                    || !thumb_bounds.contains(&event.start_position)
+                                    || !thumb_bounds.contains(&event.position)
                                 {
                                     return;
                                 }
                                 scroll_handle.start_drag();
                                 state.set(state.get().with_drag_pos(
                                     axis,
-                                    event.start_position - thumb_bounds.origin,
+                                    event.position - thumb_bounds.origin,
                                 ));
                             } else if state.get().dragged_axis != Some(axis) {
                                 return;
@@ -2744,9 +2746,8 @@ mod tests {
                         |point: Point<Pixels>| if vertical { point.y } else { point.x };
                     let started_position = if touch { start + axis_delta(5.) } else { start };
                     if touch {
-                        cx.simulate_event(TouchDragEvent {
+                        cx.simulate_event(TouchEvent {
                             phase: TouchPhase::Started,
-                            start_position: start,
                             position: started_position,
                         });
                     } else {
@@ -2764,9 +2765,8 @@ mod tests {
                     for delta in [0., 24., -8., 32., -10., 8., 0.] {
                         let position = start + axis_delta(delta);
                         if touch {
-                            cx.simulate_event(TouchDragEvent {
+                            cx.simulate_event(TouchEvent {
                                 phase: TouchPhase::Moved,
-                                start_position: start,
                                 position,
                             });
                         } else {
@@ -2798,9 +2798,8 @@ mod tests {
                     // Release contains a final displacement without an intervening move.
                     let expected_offset = reference_offset + px(12.) * offset_per_pixel;
                     if touch {
-                        cx.simulate_event(TouchDragEvent {
+                        cx.simulate_event(TouchEvent {
                             phase: TouchPhase::Ended,
-                            start_position: start,
                             position: start + axis_delta(12.),
                         });
                     } else {
@@ -2840,10 +2839,10 @@ mod tests {
             (TouchPhase::Moved, point(px(95.), px(45.))),
             (TouchPhase::Cancelled, point(px(95.), px(45.))),
         ] {
-            cx.simulate_event(TouchDragEvent {
+            cx.simulate_event(TouchEvent {
                 phase,
-                start_position,
                 position,
+                ..Default::default()
             });
         }
         assert!(

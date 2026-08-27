@@ -43,35 +43,37 @@ members = [
 resolver = "2"
 
 [workspace.package]
+version = "0.2.0"
 publish = false
 edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/gpui-ce/gpui-component"
+homepage = "https://gpui-ce.github.io/"
 
 [workspace.dependencies]
-gpui-kit = { path = "crates/kit", version = "0.7.0" }
-gpui-component = { path = "crates/component", version = "0.7.0" }
-gpui-base = { path = "crates/base", version = "0.7.0" }
-gpui-component-macros = { path = "crates/component-macros", version = "0.7.0" }
-gpui-kit-assets = { path = "crates/assets", version = "0.7.0" }
-gpui-fps = { path = "crates/fps", version = "0.7.0" }
-gpui-shell = { path = "crates/shell", version = "0.7.0" }
-gpui-wry = { path = "crates/webview", version = "0.7.0" }
-gpui-component-shell = { path = "crates/component-shell", version = "0.7.0" }
+gpui-kit = { package = "gpui_ce_kit", path = "crates/kit", version = "0.2.0" }
+gpui-component = { package = "gpui_ce_components", path = "crates/component", version = "0.2.0" }
+gpui-base = { package = "gpui_ce_components_base", path = "crates/base", version = "0.2.0" }
+gpui-component-macros = { package = "gpui_ce_components_macros", path = "crates/component-macros", version = "0.2.0" }
+gpui-component-assets = { package = "gpui_ce_components_assets", path = "crates/assets", version = "0.2.0" }
+gpui-fps = { package = "gpui_ce_components_fps", path = "crates/fps", version = "0.2.0" }
+gpui-shell = { package = "gpui_ce_components_shell", path = "crates/shell", version = "0.2.0" }
+gpui-wry = { package = "gpui_ce_components_webview", path = "crates/webview", version = "0.2.0" }
+gpui-component-shell = { package = "gpui_ce_component_shell", path = "crates/component-shell", version = "0.2.0" }
 story = { path = "crates/story" }
 
-# GPUI comes from the `gpui-pre-*` snapshots of Zed's crates, and any snapshot
-# may change GPUI's API. These requirements are what the published gpui-kit
-# crates carry to crates.io, so they pin the exact snapshot the release was
-# built against: a caret requirement let the weekly release move applications
-# onto a newer snapshot that gpui-component did not compile with (#3156). Bump
-# every snapshot crate together with its Cargo.lock entry; `script/check-gpui-pin.ts`
-# fails CI when a pin is not exact.
-gpui = { package = "gpui-pre", version = "=0.3.7" }
-gpui_platform = { package = "gpui-pre-platform", version = "=0.3.7", features = ["font-kit", "x11", "wayland", "runtime_shaders"] }
-gpui_web = { package = "gpui-pre-web", version = "=0.3.7" }
-gpui_macros = { package = "gpui-pre-macros", version = "=0.3.7" }
-reqwest_client = { package = "gpui-pre-reqwest-client", version = "=0.3.7" }
-sum-tree = { package = "gpui-pre-sum-tree", version = "=0.3.7" }
-reqwest = { package = "gpui-pre-reqwest", version = "=0.12.15", default-features = false, features = [
+# GPUI CE is published to crates.io as `gpui-ce` with its platform, web and
+# macros split into sibling crates.
+gpui = { package = "gpui-ce", version = "0.2.2" }
+gpui_platform = { package = "gpui_ce_platform", version = "0.1.0", features = [
+  "font-kit",
+  "x11",
+  "wayland",
+] }
+gpui_web = { package = "gpui_ce_web", version = "0.1.0" }
+gpui_macros = { package = "gpui_ce_macros", version = "0.1.0" }
+sum-tree = { version = "0.2.0", package = "zed-sum-tree" }
+reqwest = { version = "0.12.15-zed", package = "zed-reqwest", default-features = false, features = [
     "charset",
     "http2",
     "macos-system-configuration",
@@ -82,8 +84,9 @@ reqwest = { package = "gpui-pre-reqwest", version = "=0.12.15", default-features
 ] }
 
 anyhow = "1"
-instant = { version = "0.1", features = ["wasm-bindgen"] }
+web-time = "1"
 log = "0.4"
+palette = "0.7.6"
 lsp-types = { version = "0.97.0", features = ["proposed"] }
 notify = "8.2.0"
 raw-window-handle = "0.6.2"
@@ -144,14 +147,12 @@ rustybuzz = { opt-level = 3 }
 taffy = { opt-level = 3 }
 ttf-parser = { opt-level = 3 }
 smol = { opt-level = 3 }
-gpui-pre = { opt-level = 3 }
-gpui-pre-platform = { opt-level = 3 }
-gpui-pre-macros = { opt-level = 3 }
+gpui-ce = { opt-level = 3 }
+gpui_ce_platform = { opt-level = 3 }
+gpui_ce_macros = { opt-level = 3 }
 tree-sitter = { opt-level = 3 }
-gpui-pre-sum-tree = { opt-level = 3 }
 ropey = { opt-level = 3 }
 lsp-types = { opt-level = 3 }
-gpui-pre-reqwest-client = { opt-level = 3 }
 markdown = { opt-level = 3 }
 xml5ever = { opt-level = 3 }
 # `quickjs-jit` is a facade that re-exports `quickjs-jit-core`, so naming it alone

@@ -1,9 +1,9 @@
 // From:
 // https://github.com/zed-industries/zed/blob/56daba28d40301ee4c05546fadb691d070b7b2b6/crates/gpui/examples/window_shadow.rs
 use gpui::{
-    AnyElement, App, CursorStyle, Decorations, Edges, Hsla, InteractiveElement as _, IntoElement,
+    AnyElement, App, CursorStyle, Decorations, Edges, InteractiveElement as _, IntoElement,
     MouseButton, ParentElement, Pixels, Point, RenderOnce, ResizeEdge, Size, Styled as _, Tiling,
-    Window, div, point, prelude::FluentBuilder as _, px,
+    Window, div, hsla, point, prelude::FluentBuilder as _, px,
 };
 
 use crate::ActiveTheme;
@@ -156,19 +156,9 @@ impl RenderOnce for WindowBorder {
         let window_size = window.window_bounds().get_bounds().size;
         let is_window_active = window.is_window_active();
         let border_color = if cx.theme().is_dark() {
-            Hsla {
-                h: 0.,
-                s: 0.,
-                l: 0.2,
-                a: 1.0,
-            }
+            hsla(0., 0., 0.2, 1.)
         } else {
-            Hsla {
-                h: 0.,
-                s: 0.,
-                l: 0.8,
-                a: 1.0,
-            }
+            hsla(0., 0., 0.8, 1.)
         };
 
         div()
