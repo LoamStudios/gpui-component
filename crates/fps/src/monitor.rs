@@ -3,6 +3,7 @@ use std::time::Duration;
 use web_time::Instant;
 
 use gpui::{
+    Bounds, ColorExt as _, Context, Div, Hsla, InteractiveElement as _, IntoElement,
     App, Bounds, Context, DisplayId, Div, Hsla, InteractiveElement as _, IntoElement, MouseButton,
     ParentElement, PathBuilder, Pixels, Point, Render, StatefulInteractiveElement as _, Styled,
     Window, canvas, div, point, prelude::FluentBuilder as _, px, relative,
