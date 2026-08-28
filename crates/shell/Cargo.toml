@@ -1,13 +1,13 @@
 [package]
-name = "gpui-shell"
+name = "gpui_ce_components_shell"
 description = "A scriptable application runtime for GPUI, built on gpui-base."
-version = "0.7.0"
+version.workspace = true
 keywords = ["desktop", "gpui", "javascript", "runtime"]
-license = "Apache-2.0"
-publish = false
+license.workspace = true
+publish = true
 edition.workspace = true
-repository = "https://github.com/longbridge/gpui-kit"
-homepage = "https://gpui-kit.com"
+repository.workspace = true
+homepage.workspace = true
 
 [lib]
 name = "gpui_shell"
@@ -24,8 +24,11 @@ default = ["quickjs"]
 # so a second one can be added without the seam having to be invented first.
 quickjs = [
     "dep:rquickjs",
-    "dep:rquickjs-jit",
-    "dep:quickjs-jit-stdlib",
+    "dep:llrt_buffer",
+    "dep:llrt_crypto",
+    "dep:llrt_path",
+    "dep:llrt_url",
+    "dep:llrt_zlib",
     "dep:reqwest",
     "dep:tungstenite",
 ]
@@ -36,15 +39,23 @@ gpui_platform.workspace = true
 gpui-base = { workspace = true, features = ["inspector"] }
 gpui-fps.workspace = true
 
-# Keep the bindings, runtime, and LLRT compatibility facade on the same release.
-rquickjs = { package = "quickjs-jit", version = "0.12.11", git = "https://github.com/longbridge/quickjs-jit", rev = "96593cd7a54440ac060a391b8baea7e9a3cf1393", features = [
+# LLRT 0.8.1-beta is the newest series available on crates.io and it is bound
+# to rquickjs 0.11; keep the engine on that version so the modules share our VM.
+rquickjs = { version = "0.11", features = [
     "macro",
     "loader",
-    "jit-abi",
+    "classes",
+    "properties",
 ], optional = true }
-rquickjs-jit = { package = "quickjs-jit-runtime", version = "0.12.11", git = "https://github.com/longbridge/quickjs-jit", rev = "96593cd7a54440ac060a391b8baea7e9a3cf1393", features = ["compiler"], optional = true }
-# The stdlib facade pins LLRT modules and shares our VM through rquickjs-compat.
-quickjs-jit-stdlib = { version = "0.12.7", git = "https://github.com/longbridge/quickjs-jit", rev = "605da483611a3548edb8c33fdff602e3f5f42076", optional = true }
+# 0.8.1-beta is the newest LLRT series available on crates.io. Keep all
+# modules on that published release so the shell itself can be published.
+llrt_buffer = { version = "0.8.1-beta", optional = true }
+# Use LLRT's Ring provider instead of its vulnerable default RustCrypto/RSA
+# implementation.
+llrt_crypto = { version = "0.8.1-beta", default-features = false, features = ["crypto-ring"], optional = true }
+llrt_path = { version = "0.8.1-beta", optional = true }
+llrt_url = { version = "0.8.1-beta", optional = true }
+llrt_zlib = { version = "0.8.1-beta", default-features = false, features = ["compression-rust"], optional = true }
 # The date type `gpui_base::Date` is built from, for the calendar binding. Same
 # version as `gpui-base`'s, because the two exchange `NaiveDate` values.
 chrono = "0.4.38"
@@ -57,10 +68,11 @@ reqwest = { workspace = true, features = ["blocking"], optional = true }
 tungstenite = { version = "0.29", features = ["rustls-tls-webpki-roots", "url"], optional = true }
 
 anyhow.workspace = true
-instant.workspace = true
+web-time.workspace = true
 # Decode only bytes fetched through the document's network grant. Codec features
 # are shared with GPUI, whose image loader previously decoded these documents.
 image = { version = "0.25", default-features = false }
+palette.workspace = true
 schemars.workspace = true
 semver.workspace = true
 serde.workspace = true

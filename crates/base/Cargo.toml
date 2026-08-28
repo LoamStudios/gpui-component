@@ -1,19 +1,20 @@
 [package]
 description = "Behavior, interaction, and infrastructure foundations for GPUI applications."
 keywords = ["desktop", "gpui", "ui", "foundation"]
-license = "Apache-2.0"
-name = "gpui-base"
+license.workspace = true
+name = "gpui_ce_components_base"
 # The examples are development tools that read fixtures from `crates/story`;
 # they stay out of the published package.
 exclude = ["examples/"]
-repository = "https://github.com/longbridge/gpui-kit"
-homepage = "https://gpui-kit.com"
-documentation = "https://docs.rs/gpui-base"
-version = "0.7.0"
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/gpui_ce_components_base"
+version.workspace = true
 publish = true
 edition.workspace = true
 
 [lib]
+name = "gpui_base"
 doctest = false
 
 [[bench]]
@@ -37,7 +38,6 @@ data-url = "0.3"
 futures = "0.3"
 gpui.workspace = true
 gpui_macros.workspace = true
-instant.workspace = true
 itertools = "0.13.0"
 lsp-types.workspace = true
 markdown = { version = "1.0.0", features = ["serde"] }
@@ -80,10 +80,9 @@ ashpd = { version = "0.13", default-features = false, features = ["async-io", "s
 
 [dev-dependencies]
 criterion = "0.5"
-gpui = { workspace = true, features = ["test-support", "bench-support"] }
-gpui_platform = { workspace = true, features = ["bench-support"] }
+gpui = { workspace = true, features = ["test-support"] }
+gpui_platform = { workspace = true, features = ["test-support"] }
 indoc = "2"
-reqwest_client.workspace = true
 
 [lints]
 workspace = true

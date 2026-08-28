@@ -1,17 +1,18 @@
 [package]
 description = "GPUI Component: the styled component library of GPUI Kit, with 60+ desktop UI components for GPUI."
 keywords = ["desktop", "gpui", "shadcn", "ui", "uikit"]
-license = "Apache-2.0"
-name = "gpui-component"
-documentation = "https://docs.rs/gpui-component"
-homepage = "https://gpui-kit.com"
-repository = "https://github.com/longbridge/gpui-kit"
+license.workspace = true
+name = "gpui_ce_components"
+documentation = "https://docs.rs/gpui_ce_components"
+homepage.workspace = true
+repository.workspace = true
 readme = "../../README.md"
-version = "0.7.0"
+version.workspace = true
 publish = true
 edition.workspace = true
 
 [lib]
+name = "gpui_component"
 doctest = false
 
 [features]
@@ -114,7 +115,6 @@ smallvec.workspace = true
 sum-tree.workspace = true
 tracing.workspace = true
 log.workspace = true
-markdown = { version = "1.0.0", features = ["serde"] }
 palette.workspace = true
 
 enum-iterator = "2.1.0"
@@ -126,6 +126,13 @@ uuid = "1.10"
 # Chart
 num-traits = "0.2"
 
+# Markdown Parser
+markdown = { version = "1.0.0", features = ["serde"] }
+
+# HTML Parser
+html5ever = "0.27"
+markup5ever_rcdom = "0.3.0"
+
 # Calendar
 chrono = "0.4.38"
 
@@ -133,7 +140,7 @@ chrono = "0.4.38"
 lsp-types.workspace = true
 
 # Cross-platform time APIs (zero-cost on native, uses web APIs on WASM)
-instant.workspace = true
+web-time.workspace = true
 
 # Native-only dependencies (not available on WASM)
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
