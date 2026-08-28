@@ -16,6 +16,7 @@ use gpui_kit::component::{
     text::{TextView, markdown},
     v_flex,
 };
+use gpui_component::Colorize as _;
 use serde::Deserialize;
 
 use crate::{TestAction, section, story_toolbar_group};

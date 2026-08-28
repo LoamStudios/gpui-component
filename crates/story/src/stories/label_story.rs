@@ -8,6 +8,7 @@ use gpui_kit::component::{
     label::{HighlightsMatch, Label},
     v_flex,
 };
+use gpui_component::Colorize as _;
 use serde::Deserialize;
 
 use crate::{section, story_toolbar_group};
