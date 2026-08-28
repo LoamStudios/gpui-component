@@ -5360,7 +5360,6 @@ impl Resolver for AppModules {
         ctx: &Ctx<'js>,
         base: &str,
         name: &str,
-        _attributes: Option<ImportAttributes<'js>>,
     ) -> JsResult<String> {
         let Some(application) = self.application_for_base(base) else {
             return Err(Exception::throw_message(
@@ -5415,7 +5414,6 @@ impl Loader for AppModules {
         &mut self,
         ctx: &Ctx<'js>,
         name: &str,
-        _attributes: Option<ImportAttributes<'js>>,
     ) -> JsResult<Module<'js, Declared>> {
         let path = Self::untag(name);
         let source = read_module_source(Path::new(path))

@@ -1035,7 +1035,7 @@ fn field_expectation(field: &str) -> &'static str {
             "a human-readable name such as \"Inbox\", shown in menus and in the permission prompt"
         }
         "version" => "the plugin's own semantic version such as \"1.2.0\"",
-        "shell-version" => "the oldest compatible gpui-shell semantic version, such as \"0.1.0\"",
+        "shell-version" => "the oldest compatible gpui-shell semantic version, such as \"0.2.0\"",
         "entry" => {
             "the module to evaluate at load, such as \"main.js\", relative to the plugin directory"
         }
@@ -1098,7 +1098,7 @@ impl std::fmt::Display for ManifestProblem {
             ),
             ManifestProblem::InvalidShellVersion(version) => write!(
                 f,
-                "invalid `shell-version` \"{version}\": expected a semantic version such as \"0.1.0\""
+                "invalid `shell-version` \"{version}\": expected a semantic version such as \"0.2.0\""
             ),
             ManifestProblem::IncompatibleShellVersion { required, runtime } => write!(
                 f,
