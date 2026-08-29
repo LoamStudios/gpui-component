@@ -33,15 +33,15 @@ sysinfo = "0.37"
 core-graphics = "0.24"
 libc = "0.2"
 objc2-core-foundation = { version = "0.3", default-features = false, features = [
-    "std",
-    "CFArray",
-    "CFDictionary",
-    "CFNumber",
-    "CFString",
+  "std",
+  "CFArray",
+  "CFDictionary",
+  "CFNumber",
+  "CFString",
 ] }
 objc2-io-kit = { version = "0.3", default-features = false, features = [
-    "std",
-    "libc",
+  "std",
+  "libc",
 ] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
