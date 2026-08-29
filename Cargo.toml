@@ -143,7 +143,6 @@ split-debuginfo = "unpacked"
 
 [profile.dev.package]
 resvg = { opt-level = 3 }
-rustybuzz = { opt-level = 3 }
 taffy = { opt-level = 3 }
 ttf-parser = { opt-level = 3 }
 smol = { opt-level = 3 }

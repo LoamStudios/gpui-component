@@ -8,7 +8,7 @@ use gpui::{
     relative,
 };
 use gpui_base::{Progress as BaseProgress, Transition, transition};
-use instant::Duration;
+use web_time::Duration;
 use std::f32::consts::TAU;
 
 use crate::plot::shape::{Arc, ArcData};

@@ -11,6 +11,7 @@
 
 use std::{ffi::c_char, ptr::NonNull};
 
+use web_time::Instant;
 use objc2_core_foundation::{CFArray, CFDictionary, CFNumber, CFNumberType, CFRetained, CFString};
 use objc2_io_kit::{
     IOIteratorNext, IOObjectRelease, IORegistryEntryCreateCFProperties,
