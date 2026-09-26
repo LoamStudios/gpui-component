@@ -707,7 +707,7 @@ where
                             dismiss_handler,
                             cx,
                         ))
-                        .with_priority(gpui_base::POPUP_PRIORITY),
+                        .priority(gpui_base::POPUP_PRIORITY),
                     )
                 }),
         )

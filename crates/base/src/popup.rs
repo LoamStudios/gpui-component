@@ -195,7 +195,7 @@ impl RenderOnce for Popup {
                     .occlude()
                     .child(content),
             )
-            .with_priority(POPUP_PRIORITY),
+            .priority(POPUP_PRIORITY),
         )
     }
 }

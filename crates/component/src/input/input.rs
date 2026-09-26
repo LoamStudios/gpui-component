@@ -275,7 +275,7 @@ impl Input {
 
     /// Set full height of the input (Multi-line only).
     pub fn h_full(mut self) -> Self {
-        self.height = Some(relative(1.));
+        self.height = Some(relative(1.).into());
         self
     }
 

@@ -242,7 +242,7 @@ impl Render for TooltipOverlay {
                 })
                 .child(rendered),
         )
-        .with_priority(TOOLTIP_PRIORITY)
+        .priority(TOOLTIP_PRIORITY)
         .into_any_element()
     }
 }
