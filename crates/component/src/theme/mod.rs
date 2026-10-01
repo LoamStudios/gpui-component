@@ -862,8 +862,8 @@ mod update_tests {
     fn editing_colors_updates_the_tokens_and_the_base_projection(cx: &mut TestAppContext) {
         cx.update(|cx| {
             init(cx);
-            let sidebar = gpui::rgb(0x123456).into();
-            let primary = gpui::rgb(0xabcdef).into();
+            let sidebar = gpui::rgb_to_hsla(gpui::rgb(0x123456));
+            let primary = gpui::rgb_to_hsla(gpui::rgb(0xabcdef));
 
             Theme::update(cx, |theme| {
                 theme.sidebar = sidebar;
@@ -900,18 +900,20 @@ mod update_tests {
     fn a_gradient_survives_until_its_own_color_is_edited(cx: &mut TestAppContext) {
         cx.update(|cx| {
             init(cx);
-            let from = gpui::rgb(0x4f46e5).into();
-            let to = gpui::rgb(0x06b6d4).into();
+            let from = gpui::rgb_to_hsla(gpui::rgb(0x4f46e5));
+            let to = gpui::rgb_to_hsla(gpui::rgb(0x06b6d4));
             let token = gradient(from, to);
             Theme::update(cx, |theme| theme.tokens.primary = token);
             // The token's solid color is written back, so text painted with
             // `theme.primary` matches the gradient's representative color.
             assert_eq!(Theme::global(cx).primary, from);
 
-            Theme::update(cx, |theme| theme.secondary = gpui::rgb(0x222222).into());
+            Theme::update(cx, |theme| {
+                theme.secondary = gpui::rgb_to_hsla(gpui::rgb(0x222222))
+            });
             assert_eq!(Theme::global(cx).tokens.primary, token);
 
-            let solid = gpui::rgb(0x999999).into();
+            let solid = gpui::rgb_to_hsla(gpui::rgb(0x999999));
             Theme::update(cx, |theme| theme.primary = solid);
             assert_eq!(Theme::global(cx).tokens.primary, solid.into());
         });
@@ -1109,10 +1111,15 @@ mod base_theme_projection_tests {
             macro_rules! color {
                 ($field:ident) => {
                     assert!(
-                        (left.$field.h - right.$field.h).abs() < 1e-6
-                            && (left.$field.s - right.$field.s).abs() < 1e-6
-                            && (left.$field.l - right.$field.l).abs() < 1e-6
-                            && (left.$field.a - right.$field.a).abs() < 1e-6,
+                        (left.$field.color.hue.into_degrees()
+                            - right.$field.color.hue.into_degrees())
+                        .abs()
+                            < 1e-4
+                            && (left.$field.color.saturation - right.$field.color.saturation).abs()
+                                < 1e-6
+                            && (left.$field.color.lightness - right.$field.color.lightness).abs()
+                                < 1e-6
+                            && (left.$field.alpha - right.$field.alpha).abs() < 1e-6,
                         "{} differs: {:?} != {:?}",
                         stringify!($field),
                         left.$field,

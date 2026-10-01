@@ -150,7 +150,7 @@ mod oklab {
 pub fn oklch(lightness: f32, chroma: f32, hue: f32) -> Hsla {
     let hue = hue.to_radians();
     let rgb = oklab::oklab_to_rgb(lightness, chroma * hue.cos(), chroma * hue.sin());
-    rgb.into()
+    rgb.into_color()
 }
 
 impl Colorize for Hsla {
@@ -786,7 +786,9 @@ where
     D: Deserializer<'de>,
 {
     Option::<String>::deserialize(deserializer)?.map_or(Ok(None), |value| {
-        try_parse_color(&value).map(Some).map_err(serde::de::Error::custom)
+        try_parse_color(&value)
+            .map(Some)
+            .map_err(serde::de::Error::custom)
     })
 }
 
