@@ -2,7 +2,7 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
-[![Build Status](https://github.com/longbridge/gpui-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/longbridge/gpui-kit/actions/workflows/ci.yml) [![Docs](https://docs.rs/gpui-kit/badge.svg)](https://docs.rs/gpui-kit/) [![Crates.io](https://img.shields.io/crates/v/gpui-kit.svg)](https://crates.io/crates/gpui-kit)
+[![Build Status](https://github.com/gpui-ce/gpui-component/actions/workflows/ci.yml/badge.svg)](https://github.com/gpui-ce/gpui-component/actions/workflows/ci.yml) [![Docs](https://docs.rs/gpui-ce-kit/badge.svg)](https://docs.rs/gpui-ce-kit/) [![Crates.io](https://img.shields.io/crates/v/gpui-ce-kit.svg)](https://crates.io/crates/gpui-ce-kit)
 
 使用 Rust 和 GPUI 构建出色、高性能的桌面应用。
 
@@ -19,7 +19,7 @@ gpui-kit             应用唯一需要依赖的 crate
 └── gpui-component   GPUI Component：完整的带样式 UI 系统
 ```
 
-`gpui-kit` 会固定配套的 GPUI 版本并导出 GPUI、base、component 和 assets，Rust 应用只需声明这一个依赖。JavaScript 扩展宿主另行依赖 `gpui-shell`；`gpui-component-shell` 提供带样式的组件目录。
+`gpui-kit` 会固定配套的 GPUI 版本并导出 GPUI、base、component 和 assets，Rust 应用只需声明这一个依赖。GPUI CE 分支不包含 JavaScript 扩展层。
 
 ## 特性
 
@@ -36,46 +36,45 @@ gpui-kit             应用唯一需要依赖的 crate
 - **Dock 布局**：可调整面板、可拖拽标签、嵌套分割、边缘停靠，并可序列化保存。
 - **丰富内容**：原生 Markdown 与 HTML 渲染、语法高亮和内置图表。
 - **设计自由**：使用完整视觉系统，或基于 `gpui-base` 的行为与基础设施构建自己的系统。
-- **JavaScript 扩展**：`gpui-shell` 让已发布的 Rust 宿主以脚本方式加载面板与业务逻辑，每项能力都需显式授予。
 - **跨平台**：通过一份 Rust 代码交付 macOS、Windows 和 Linux。
 
 ## 框架架构
 
 ### 三层架构，一个生态
 
-使用 `gpui-component`，让整个应用保持统一、完整的视觉与交互风格；当产品需要创建并拥有自己的设计系统时，使用 `gpui-base`；当应用需要在交付后仍可被 JavaScript 扩展时，使用 `gpui-shell`。
+使用 `gpui-component`，让整个应用保持统一、完整的视觉与交互风格；当产品需要创建并拥有自己的设计系统时，使用 `gpui-base`。
 
-| **`gpui-component`**     | **`gpui-base`**            | **`gpui-shell`**                 |
-| ------------------------ | -------------------------- | -------------------------------- |
-| 完整且带样式的组件       | 无预设样式的行为与基础设施 | 由 Rust 托管的 JavaScript 运行时 |
-| 开箱即用，并支持主题定制 | 完全掌控结构与视觉设计     | 能力逐项授予                     |
-| 适合直接构建应用         | 适合构建设计系统           | 适合插件与脚本化应用             |
+| **`gpui-component`**     | **`gpui-base`**            |
+| ------------------------ | -------------------------- |
+| 完整且带样式的组件       | 无预设样式的行为与基础设施 |
+| 开箱即用，并支持主题定制 | 完全掌控结构与视觉设计     |
+| 适合直接构建应用         | 适合构建设计系统           |
 
 ```text
                              APPLICATION
                                   │
-              ┌───────────────────┼───────────────────┐
-              │                   │                   │
-              ▼                   ▼                   ▼
-    ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-    │  gpui-component  │ │ Your Design      │ │    gpui-shell    │
-    │    Styled UI     │ │ System           │ │  JS extensions   │
-    └────────┬─────────┘ └────────┬─────────┘ └────────┬─────────┘
-             │                    │                    │
-             └────────────────────┼────────────────────┘
-                                  ▼
-                        ┌──────────────────┐
-                        │    gpui-base     │
-                        │ Behavior · State │
-                        │ Infrastructure   │
-                        └────────┬─────────┘
-                                 ▼
-                               GPUI
+                      ┌───────────┴───────────┐
+                      │                       │
+                      ▼                       ▼
+            ┌──────────────────┐   ┌──────────────────┐
+            │  gpui-component  │   │ Your Design      │
+            │    Styled UI     │   │ System           │
+            └────────┬─────────┘   └────────┬─────────┘
+                     │                      │
+                     └──────────┬───────────┘
+                                ▼
+                      ┌──────────────────┐
+                      │    gpui-base     │
+                      │ Behavior · State │
+                      │ Infrastructure   │
+                      └────────┬─────────┘
+                               ▼
+                              GPUI
 ```
 
 > **行为属于基础层，呈现属于应用。**
 
-如果希望使用精致、开箱即用且风格统一的控件，请选择 **`gpui-component`**。如果应用需要拥有组件源码、布局、样式和动效，同时复用复杂且可靠的交互行为，请直接构建于 **`gpui-base`**。如果希望贡献者无需 fork、也无需发新版本就能扩展产品，请加入 **`gpui-shell`**。
+如果希望使用精致、开箱即用且风格统一的控件，请选择 **`gpui-component`**。如果应用需要拥有组件源码、布局、样式和动效，同时复用复杂且可靠的交互行为，请直接构建于 **`gpui-base`**。
 
 这种分层方式与 [shadcn](https://ui.shadcn.com) 生态的灵活性来源一致：
 
@@ -100,7 +99,7 @@ GPUI Kit 从第一天起就用于构建 [Longbridge Pro](https://longbridge.com/
 
 ```toml
 [dependencies]
-gpui-kit = "0.7"
+gpui-ce-kit = "0.2"
 ```
 
 `gpui-kit` 始终引入 GPUI 和 `gpui-base`；`gpui-component` 和默认图标集默认开启。只想保留部分层时关闭默认 feature 按需选择即可。`gpui-component` 的 feature（`inspector`、`decimal`、`tree-sitter` 及各 `tree-sitter-<language>`）在 `gpui-kit` 上同名可用。
@@ -148,14 +147,14 @@ fn main() {
 
 ### 图标
 
-默认开启的 `assets` feature 会以 `gpui-kit-assets` 的形式内置 [Lucide](https://lucide.dev) 图标集，通过 `gpui_kit::application().with_assets(gpui_kit::assets::Assets)` 交给应用即可。若想使用自己的图标，去掉该 feature，并按照 [IconName](https://github.com/longbridge/gpui-kit/blob/main/crates/component/src/icon.rs#L86) 中的定义命名 SVG 文件。
+默认开启的 `assets` feature 会以 `gpui-kit-assets` 的形式内置 [Lucide](https://lucide.dev) 图标集，通过 `gpui_kit::application().with_assets(gpui_kit::assets::Assets)` 交给应用即可。若想使用自己的图标，去掉该 feature，并按照 [IconName](https://github.com/gpui-ce/gpui-component/blob/main/crates/component/src/icon.rs#L86) 中的定义命名 SVG 文件。
 
 ## AI 编码 Agent 技能 (Skills)
 
 为你的 AI 编码助手（Cursor, Claude Code, Gemini CLI, Codex 等）安装 GPUI Kit 技能库：
 
 ```bash
-npx skills add longbridge/gpui-kit
+npx skills add gpui-ce/gpui-component
 ```
 
 | 技能                     | 描述                                                                                                          |
