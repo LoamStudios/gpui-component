@@ -150,7 +150,6 @@ content_from_text!(
     &mut str,
     &String,
     String,
-    char,
     Box<str>,
     std::sync::Arc<str>,
     &std::sync::Arc<str>,

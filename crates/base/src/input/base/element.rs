@@ -7,10 +7,9 @@ use gpui::{
 };
 use gpui::{
     ColorExt as _, HighlightStyle, Hitbox, HitboxBehavior, Hsla, InteractiveElement, IntoElement,
-    LayoutId, LongPressEvent, MouseButton, MouseMoveEvent, MouseUpEvent, ParentElement as _,
-    Path, Pixels, Point, Position, ShapedLine, SharedString, Size, Style, Styled as _, TextAlign,
-    TextRun, TextStyle, TouchEvent, TouchPhase, UnderlineStyle, Window, fill, point, px, relative,
-    size,
+    LayoutId, MouseButton, MouseMoveEvent, MouseUpEvent, ParentElement as _, Path, Pixels, Point,
+    Position, ShapedLine, SharedString, Size, Style, Styled as _, TextAlign, TextRun, TextStyle,
+    UnderlineStyle, Window, fill, point, px, relative, size,
 };
 use ropey::Rope;
 use smallvec::SmallVec;
@@ -441,45 +440,7 @@ impl<M: InputModeKind> TextElement<M> {
         self
     }
 
-    fn paint_mouse_listeners(&mut self, hitbox: &Hitbox, window: &mut Window, _: &mut App) {
-        // Every touch is offered as a drag first; that is how a tap's mouse
-        // events are later told apart from a mouse's.
-        window.on_mouse_event(move |event: &TouchEvent, phase, _, cx| {
-            if phase.capture() && event.phase == TouchPhase::Started {
-                crate::GlobalState::note_touch(cx);
-            }
-        });
-
-        // A long press is touch's way to select: the word under the finger,
-        // then whatever the finger sweeps over. Claiming it keeps the moves
-        // out of the pan recognizer, so the input does not scroll instead.
-        window.on_mouse_event({
-            let state = self.state.clone();
-            let hitbox = hitbox.clone();
-            move |event: &LongPressEvent, phase, window, cx| {
-                if !phase.bubble() {
-                    return;
-                }
-                if event.phase == TouchPhase::Started {
-                    if window.default_prevented() || !hitbox.is_hovered(window) {
-                        return;
-                    }
-                    if !state.update(cx, |state, cx| state.on_long_press(event, window, cx)) {
-                        return;
-                    }
-                    window.capture_long_press(&state);
-                } else if !window.has_long_press_capture(&state) {
-                    return;
-                } else {
-                    state.update(cx, |state, cx| {
-                        state.on_long_press(event, window, cx);
-                    });
-                }
-                window.prevent_default();
-                cx.stop_propagation();
-            }
-        });
-
+    fn paint_mouse_listeners(&mut self, _hitbox: &Hitbox, window: &mut Window, _: &mut App) {
         window.on_mouse_event({
             let state = self.state.clone();
 
