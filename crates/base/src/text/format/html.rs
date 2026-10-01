@@ -128,13 +128,13 @@ fn mark_color(attrs: &RefCell<Vec<html5ever::Attribute>>) -> Option<Hsla> {
 
 fn parse_mark_color(value: &str) -> Option<Hsla> {
     if value.starts_with('#') {
-        return gpui::Rgba::try_from(value).ok().map(Into::into);
+        return crate::color_picker::parse_hex(value);
     }
     match value.to_ascii_lowercase().as_str() {
-        "black" => Some(gpui::rgb(0x000000).into()),
-        "white" => Some(gpui::rgb(0xffffff).into()),
-        "blue" => Some(gpui::rgb(0x3b82f6).into()),
-        "yellow" => Some(gpui::rgb(0xfacc15).into()),
+        "black" => Some(gpui::rgb_to_hsla(gpui::rgb(0x000000))),
+        "white" => Some(gpui::rgb_to_hsla(gpui::rgb(0xffffff))),
+        "blue" => Some(gpui::rgb_to_hsla(gpui::rgb(0x3b82f6))),
+        "yellow" => Some(gpui::rgb_to_hsla(gpui::rgb(0xfacc15))),
         _ => None,
     }
 }
@@ -361,7 +361,8 @@ fn parse_paragraph(paragraph: &mut Paragraph, node: &Rc<Node>) {
                 merge_children_with_mark(node, paragraph, Some(TextMark::default().code()));
             }
             local_name!("mark") => {
-                let color = mark_color(&attrs).unwrap_or_else(|| gpui::rgb(0xfef08a).into());
+                let color =
+                    mark_color(&attrs).unwrap_or_else(|| gpui::rgb_to_hsla(gpui::rgb(0xfef08a)));
                 merge_children_with_mark(
                     node,
                     paragraph,

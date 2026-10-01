@@ -3694,7 +3694,7 @@ mod tests {
             vec![(
                 0..2,
                 HighlightStyle {
-                    color: Some(gpui::rgb(0x0000ff).into()),
+                    color: Some(gpui::rgb_to_hsla(gpui::rgb(0x0000ff))),
                     ..Default::default()
                 },
             )]
@@ -3703,7 +3703,7 @@ mod tests {
             vec![(
                 0..2,
                 HighlightStyle {
-                    color: Some(gpui::rgb(0xffff00).into()),
+                    color: Some(gpui::rgb_to_hsla(gpui::rgb(0xffff00))),
                     ..Default::default()
                 },
             )]
@@ -3713,8 +3713,14 @@ mod tests {
         let light_styles = block.highlighted_styles(&light);
         let dark_styles = block.highlighted_styles(&dark);
 
-        assert_eq!(light_styles[0].1.color, Some(gpui::rgb(0x0000ff).into()));
-        assert_eq!(dark_styles[0].1.color, Some(gpui::rgb(0xffff00).into()));
+        assert_eq!(
+            light_styles[0].1.color,
+            Some(gpui::rgb_to_hsla(gpui::rgb(0x0000ff)))
+        );
+        assert_eq!(
+            dark_styles[0].1.color,
+            Some(gpui::rgb_to_hsla(gpui::rgb(0xffff00)))
+        );
         assert_eq!(block.code(), "42", "the document must survive the swap");
     }
 
@@ -4279,7 +4285,7 @@ mod tests {
         assert_eq!(wrap(TextMark::default().code()), "`x`");
         assert_eq!(wrap(TextMark::default().strikethrough()), "~~x~~");
         assert_eq!(
-            wrap(TextMark::default().highlight(gpui::rgb(0xfef08a).into())),
+            wrap(TextMark::default().highlight(gpui::rgb_to_hsla(gpui::rgb(0xfef08a)))),
             "==x=="
         );
         // No Markdown syntax for underline, so it keeps the tag it came from.

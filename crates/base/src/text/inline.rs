@@ -9,11 +9,11 @@ use std::{
 };
 
 use gpui::{
-    App, BorderStyle, Bounds, ClickEvent, CursorStyle, Edges, Element, ElementId, GlobalElementId,
-    Half, HighlightStyle, Hitbox, HitboxBehavior, Hsla, InspectorElementId, IntoElement, LayoutId,
-    MouseButton, MouseClickEvent, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point,
-    SharedString, StyledText, TextAlign, TextLayout, TextRun, TextStyle, Window, point, px, quad,
-    size,
+    App, BorderStyle, Bounds, ClickEvent, ColorExt as _, CursorStyle, Edges, Element, ElementId,
+    GlobalElementId, Half, HighlightStyle, Hitbox, HitboxBehavior, Hsla, InspectorElementId,
+    IntoElement, LayoutId, MouseButton, MouseClickEvent, MouseDownEvent, MouseMoveEvent,
+    MouseUpEvent, Pixels, Point, SharedString, StyledText, TextAlign, TextLayout, TextRun,
+    TextStyle, Window, point, px, quad, size,
 };
 
 use crate::{
@@ -1378,11 +1378,11 @@ mod fade_highlights_tests {
 
         let (_, untouched) = &combined[0];
         assert_eq!(untouched.style.fade_out, None);
-        assert_eq!(untouched.style.background_color.unwrap().a, 1.0);
+        assert_eq!(untouched.style.background_color.unwrap().alpha, 1.0);
 
         let (_, faded_code) = &combined[1];
         assert_eq!(faded_code.style.fade_out, Some(0.5));
-        assert_eq!(faded_code.style.background_color.unwrap().a, 0.5);
+        assert_eq!(faded_code.style.background_color.unwrap().alpha, 0.5);
 
         let (_, faded_text) = &combined[2];
         assert_eq!(faded_text.style.fade_out, Some(0.5));
@@ -1797,28 +1797,6 @@ pub(super) mod test_fonts {
         }
     }
 
-    thread_local! {
-        static SHAPED_LINE_RECORDER: RefCell<Option<Vec<String>>> = const { RefCell::new(None) };
-    }
-
-    struct ShapeRecorderGuard;
-
-    impl Drop for ShapeRecorderGuard {
-        fn drop(&mut self) {
-            SHAPED_LINE_RECORDER.with(|recorder| recorder.borrow_mut().take());
-        }
-    }
-
-    /// Runs `f` while recording text submitted to [`PlatformTextSystem::layout_line`].
-    pub(crate) fn record_shaped_lines<R>(f: impl FnOnce() -> R) -> (R, Vec<String>) {
-        SHAPED_LINE_RECORDER.with(|recorder| *recorder.borrow_mut() = Some(Vec::new()));
-        let _guard = ShapeRecorderGuard;
-        let result = f();
-        let shaped_lines =
-            SHAPED_LINE_RECORDER.with(|recorder| recorder.borrow_mut().take().unwrap_or_default());
-        (result, shaped_lines)
-    }
-
     impl PlatformTextSystem for WideMonoTextSystem {
         fn add_fonts(&self, _fonts: Vec<Cow<'static, [u8]>>) -> anyhow::Result<()> {
             Ok(())
@@ -1894,6 +1872,10 @@ pub(super) mod test_fonts {
         }
 
         fn layout_line(&self, text: &str, font_size: Pixels, runs: &[FontRun]) -> LineLayout {
+            thread_local! {
+                static SHAPED_LINE_RECORDER: RefCell<Option<Vec<String>>> =
+                    const { RefCell::new(None) };
+            }
             SHAPED_LINE_RECORDER.with(|recorder| {
                 if let Some(lines) = recorder.borrow_mut().as_mut() {
                     lines.push(text.to_string());
