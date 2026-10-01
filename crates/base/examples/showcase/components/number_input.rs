@@ -20,7 +20,7 @@ impl BaseShowcase {
                 .justify_center()
                 .bg(gpui::black())
                 .text_color(gpui::white())
-                .hover(|this| this.bg(gpui::black().opacity(0.8)))
+                .hover(|this| this.bg(gpui::ColorExt::opacity(&gpui::black(), 0.8)))
                 .child(icon)
         }
 

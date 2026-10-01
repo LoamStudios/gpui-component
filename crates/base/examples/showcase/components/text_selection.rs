@@ -1,6 +1,4 @@
 use gpui::{Context, IntoElement, ParentElement as _, Styled as _, Window};
-#[cfg(test)]
-use gpui_base::ElementExt as _;
 use gpui_base::{SelectableText, TextSelection};
 
 use super::*;
@@ -78,10 +76,9 @@ impl BaseShowcase {
         #[cfg(test)]
         let footer = {
             let bounds = self.text_selection_footer_bounds.clone();
-            gpui_base::ElementExt::on_prepaint(
-                footer,
-                move |value, _, _| *bounds.borrow_mut() = Some(value),
-            )
+            gpui_base::ElementExt::on_prepaint(footer, move |value, _, _| {
+                *bounds.borrow_mut() = Some(value)
+            })
         };
 
         div()
