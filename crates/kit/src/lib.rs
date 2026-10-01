@@ -19,6 +19,9 @@
 //!
 //! ```no_run
 //! use gpui_kit::*;
+//! // GPUI CE's action macros expand to unanchored paths; an explicit alias
+//! // keeps them off the ambiguous glob re-export.
+//! use gpui_kit as gpui;
 //!
 //! actions!(hello, [Quit]);
 //!
