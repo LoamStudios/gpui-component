@@ -11,8 +11,8 @@
 use gpui_base::TestSupportExt as _;
 
 use gpui::{
-    AnyElement, App, ElementId, InteractiveElement, Interactivity, IntoElement, MouseButton,
-    ParentElement, RenderOnce, Role, SharedString, StatefulInteractiveElement as _,
+    AnyElement, App, ColorExt as _, ElementId, InteractiveElement, Interactivity, IntoElement,
+    MouseButton, ParentElement, RenderOnce, Role, SharedString, StatefulInteractiveElement as _,
     StyleRefinement, Styled, ViewElement, Window, div, prelude::FluentBuilder as _, px, rems,
 };
 

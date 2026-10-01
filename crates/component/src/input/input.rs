@@ -1081,7 +1081,7 @@ mod tests {
             cx.update(|window, cx| {
                 base.set_disabled(disabled, cx);
                 base.set_readonly(!disabled, cx);
-                window.blur(cx);
+                window.blur();
                 Input::handle_accessibility_focus(&base, window, cx);
                 assert_eq!(
                     base.presentation(cx).focus_handle().is_focused(window),
@@ -1186,10 +1186,7 @@ mod tests {
             let _ = window.draw(cx);
         });
 
-        assert_eq!(
-            *captured.lock().unwrap(),
-            vec![None, None]
-        );
+        assert_eq!(*captured.lock().unwrap(), vec![None, None]);
     }
 
     #[test]

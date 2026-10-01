@@ -4,6 +4,7 @@ use gpui::{
     App, InteractiveElement as _, IntoElement, ParentElement as _, RenderOnce, StyleRefinement,
     Styled, Window, div, prelude::FluentBuilder as _,
 };
+use palette::WithAlpha as _;
 
 /// The element an [`InlineToken`](super::InlineToken) renders as by default. Editing
 /// and activation belong to the input.
@@ -48,7 +49,7 @@ impl RenderOnce for InputToken {
                 // is the matching border.
                 if self.context.is_selected() {
                     this.bg(cx.theme().selection)
-                        .border_color(cx.theme().selection.alpha(1.))
+                        .border_color(cx.theme().selection.with_alpha(1.))
                 } else {
                     this.bg(cx.theme().muted).border_color(cx.theme().border)
                 }

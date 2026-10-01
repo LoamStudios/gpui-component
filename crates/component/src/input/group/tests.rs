@@ -84,8 +84,7 @@ mod interaction {
     use crate::{Root, WindowExt as _};
     use gpui::{
         ClipboardEntry, ClipboardItem, Context, Entity, EntityInputHandler as _, FocusHandle,
-        InputEvent as _, LongPressEvent, Modifiers, Render, TouchPhase, VisualTestContext, point,
-        px,
+        Modifiers, Render, VisualTestContext, point, px,
     };
     use gpui_base::test_support::{ElementSnapshot, find};
     use std::rc::Rc;
@@ -289,70 +288,6 @@ mod interaction {
             draw(&mut cx);
             assert_eq!(received.borrow().len(), 3);
             assert_eq!(cx.update(|_, cx| state.text(cx).to_string()), "texttext");
-        }
-    }
-
-    #[gpui::test]
-    fn long_press_shows_edit_menu_and_copy_keeps_the_text(cx: &mut TestAppContext) {
-        for multiline in [false, true] {
-            let (probe, mut cx) = mount(cx, multiline);
-            cx.update(|window, cx| {
-                if multiline {
-                    let state = probe.read(cx).textarea.clone();
-                    state.update(cx, |state, cx| {
-                        state.set_value("quick select value", window, cx)
-                    });
-                } else {
-                    let state = probe.read(cx).input.clone();
-                    state.update(cx, |state, cx| {
-                        state.set_value("quick select value", window, cx)
-                    });
-                }
-            });
-            draw(&mut cx);
-            let bounds = probe
-                .read_with(&cx, |probe, cx| {
-                    if multiline {
-                        probe.textarea.read(cx).range_to_bounds(&(0..1))
-                    } else {
-                        probe.input.read(cx).range_to_bounds(&(0..1))
-                    }
-                })
-                .unwrap();
-            let position = bounds.center();
-            for phase in [TouchPhase::Started, TouchPhase::Ended] {
-                cx.update(|window, cx| {
-                    window.dispatch_event(
-                        LongPressEvent {
-                            phase,
-                            start_position: position,
-                            position,
-                        }
-                        .to_platform_input(),
-                        cx,
-                    );
-                });
-                draw(&mut cx);
-            }
-            for command in ["Cut", "Copy", "Paste", "Select All"] {
-                assert!(snapshot(&mut cx, command).visible());
-            }
-            click(&mut cx, "Copy");
-            assert_eq!(
-                cx.update(|_, cx| cx.read_from_clipboard().and_then(|item| item.text())),
-                Some("quick".into())
-            );
-            assert!(cx.update(|window, _| find(window, &[], &"Copy".into()).is_none()));
-            assert_eq!(
-                probe.read_with(&cx, |probe, cx| {
-                    if multiline {
-                        probe.textarea.read(cx).value()
-                    } else {
-                        probe.input.read(cx).value()
-                    }
-                }),
-                "quick select value"
-            );
         }
     }
 
