@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use gpui::{
-    App, Bounds, Hitbox, HitboxBehavior, IntoElement, MouseButton, MouseDownEvent, MouseMoveEvent,
-    MouseUpEvent, Pixels, Point, RenderOnce, Styled as _, TouchDragEvent, TouchPhase, Window,
+    App, Bounds, ColorExt as _, Hitbox, HitboxBehavior, IntoElement, MouseButton, MouseDownEvent,
+    MouseMoveEvent, MouseUpEvent, Pixels, Point, RenderOnce, Styled as _, TouchPhase, Window,
     canvas, deferred,
 };
 use gpui_base::{SelectionEdge, TouchHandle, TouchSelectionSnapshot};
@@ -93,7 +93,7 @@ impl SelectionHandles {
         TouchHandle::paint(
             handle.edge,
             handle.caret,
-            cx.theme().selection.alpha(1.),
+            cx.theme().selection.opacity(1.),
             window,
         );
     }
@@ -108,26 +108,7 @@ impl SelectionHandles {
         window: &mut Window,
     ) {
         for handle in handles {
-            // Touch: the drag is offered on the first touch, before it can
-            // become a tap, a long press or a pan.
-            window.on_mouse_event({
-                let hitbox = handle.hitbox.clone();
-                let edge = handle.edge;
-                let on_drag = on_drag.clone();
-                move |event: &TouchDragEvent, phase, window, cx| {
-                    if !phase.bubble()
-                        || event.phase != TouchPhase::Started
-                        || window.default_prevented()
-                        || !hitbox.is_hovered(window)
-                    {
-                        return;
-                    }
-                    window.prevent_default();
-                    cx.stop_propagation();
-                    on_drag(edge, TouchPhase::Started, event.position, window, cx);
-                }
-            });
-            // Mouse: the same drag for a pointer.
+            // Mouse: the drag for a pointer.
             window.on_mouse_event({
                 let hitbox = handle.hitbox.clone();
                 let edge = handle.edge;
@@ -151,20 +132,6 @@ impl SelectionHandles {
             let source = source.clone();
             move |window: &Window, cx: &App| source(window, cx).and_then(|s| s.dragging())
         };
-        window.on_mouse_event({
-            let on_drag = on_drag.clone();
-            let dragging = dragging.clone();
-            move |event: &TouchDragEvent, phase, window, cx| {
-                if !phase.bubble() || event.phase == TouchPhase::Started {
-                    return;
-                }
-                let Some(edge) = dragging(window, cx) else {
-                    return;
-                };
-                cx.stop_propagation();
-                on_drag(edge, event.phase, event.position, window, cx);
-            }
-        });
         window.on_mouse_event({
             let on_drag = on_drag.clone();
             let dragging = dragging.clone();
