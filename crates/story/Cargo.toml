@@ -12,7 +12,8 @@ default = ["tree-sitter"]
 
 [dependencies]
 anyhow.workspace = true
-gpui-kit.workspace = true
+palette.workspace = true
+gpui-kit = { workspace = true, features = ["component", "assets"] }
 gpui-fps.workspace = true
 
 async-channel = "2.3.1"
@@ -37,7 +38,6 @@ dirs = "6.0.0"
 
 # Native-only dependencies (not available on WASM)
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-gpui-shell.workspace = true
 smol.workspace = true
 
 [target.'cfg(target_family = "wasm")'.dependencies]
