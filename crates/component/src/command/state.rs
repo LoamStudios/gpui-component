@@ -11,8 +11,7 @@ use gpui::{
 use rust_i18n::t;
 
 use crate::{
-    ActiveTheme as _, Icon, IconName, IndexPath, StyledExt as _,
-    VirtualListScrollHandle,
+    ActiveTheme as _, Icon, IconName, IndexPath, StyledExt as _, VirtualListScrollHandle,
     actions::{Cancel, Confirm, SelectDown, SelectUp},
     command::{
         command::CommandOptions,
@@ -1003,37 +1002,37 @@ impl Render for CommandState {
                                 )
                             })
                         }
-                        },
-                    )
-                    .max_h(self.options.max_h)
-                    .overflow_hidden()
-                    // While a search is in flight the list is empty because the
-                    // answer has not arrived, which is not the same as no match.
-                    .when(rows_count == 0 && !self.loading, |this| {
-                        this.child(self.render_empty(window, cx))
-                    })
-                    .when(rows_count > 0, |this| {
-                        this.child(
-                            v_virtual_list(
-                                command_state.clone(),
-                                "command-list",
-                                row_sizes,
-                                move |this, visible_range, window, cx| {
-                                    visible_range
-                                        .map(|row_ix| this.render_visible_row(row_ix, window, cx))
-                                        .collect::<Vec<_>>()
-                                },
-                            )
-                            // Padding on the virtual list acts like CSS
-                            // scroll-padding: the scroll ends keep their inset
-                            // while scrolled-under rows paint and clip at the
-                            // list edge.
-                            .p_1()
-                            .with_sizing_behavior(ListSizingBehavior::Infer)
-                            .track_scroll(&self.scroll_handle),
+                    },
+                )
+                .max_h(self.options.max_h)
+                .overflow_hidden()
+                // While a search is in flight the list is empty because the
+                // answer has not arrived, which is not the same as no match.
+                .when(rows_count == 0 && !self.loading, |this| {
+                    this.child(self.render_empty(window, cx))
+                })
+                .when(rows_count > 0, |this| {
+                    this.child(
+                        v_virtual_list(
+                            command_state.clone(),
+                            "command-list",
+                            row_sizes,
+                            move |this, visible_range, window, cx| {
+                                visible_range
+                                    .map(|row_ix| this.render_visible_row(row_ix, window, cx))
+                                    .collect::<Vec<_>>()
+                            },
                         )
-                        .child(Scrollbar::vertical(&self.scroll_handle))
-                    }),
+                        // Padding on the virtual list acts like CSS
+                        // scroll-padding: the scroll ends keep their inset
+                        // while scrolled-under rows paint and clip at the
+                        // list edge.
+                        .p_1()
+                        .with_sizing_behavior(ListSizingBehavior::Infer)
+                        .track_scroll(&self.scroll_handle),
+                    )
+                    .child(Scrollbar::vertical(&self.scroll_handle))
+                }),
             )
             .when_some(self.options.footer.as_ref(), |this, footer| {
                 this.child(footer(self, window, cx))

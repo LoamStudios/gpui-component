@@ -1,10 +1,10 @@
 use std::{ops::Range, time::Duration};
 
 use gpui::{
-    AnyElement, App, Axis, Context, ElementId, Entity, FollowMode, Hsla, InteractiveElement as _,
-    IntoElement, ListAlignment, ListOffset, ListState, ParentElement as _, RenderOnce, Role,
-    SharedString, StatefulInteractiveElement as _, StyleRefinement, Styled, Window, div,
-    linear_color_stop, linear_gradient, list, prelude::FluentBuilder as _, px, rems,
+    AnyElement, App, Axis, ColorExt as _, Context, ElementId, Entity, FollowMode, Hsla,
+    InteractiveElement as _, IntoElement, ListAlignment, ListOffset, ListState, ParentElement as _,
+    RenderOnce, Role, SharedString, StatefulInteractiveElement as _, StyleRefinement, Styled,
+    Window, div, linear_color_stop, linear_gradient, list, prelude::FluentBuilder as _, px, rems,
 };
 use gpui_base::motion::{Transition, transition};
 
