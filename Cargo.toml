@@ -32,13 +32,9 @@ members = [
     "examples/sidebar",
     "examples/text_max_lines",
     "examples/text_selection",
-    "examples/touch_selection",
     "examples/table_in_scrollable",
     "examples/markdown_table",
     "examples/ai_recipes",
-    "crates/shell",
-    "crates/shell/rquickjs-compat",
-    "crates/component-shell",
 ]
 resolver = "2"
 
@@ -51,15 +47,13 @@ repository = "https://github.com/gpui-ce/gpui-component"
 homepage = "https://gpui-ce.github.io/"
 
 [workspace.dependencies]
-gpui-kit = { package = "gpui_ce_kit", path = "crates/kit", version = "0.2.0" }
+gpui-kit = { package = "gpui_ce_kit", path = "crates/kit", version = "0.2.0", default-features = false }
 gpui-component = { package = "gpui_ce_components", path = "crates/component", version = "0.2.0" }
 gpui-base = { package = "gpui_ce_components_base", path = "crates/base", version = "0.2.0" }
 gpui-component-macros = { package = "gpui_ce_components_macros", path = "crates/component-macros", version = "0.2.0" }
-gpui-component-assets = { package = "gpui_ce_components_assets", path = "crates/assets", version = "0.2.0" }
+gpui-kit-assets = { package = "gpui_ce_components_assets", path = "crates/assets", version = "0.2.0" }
 gpui-fps = { package = "gpui_ce_components_fps", path = "crates/fps", version = "0.2.0" }
-gpui-shell = { package = "gpui_ce_components_shell", path = "crates/shell", version = "0.2.0" }
 gpui-wry = { package = "gpui_ce_components_webview", path = "crates/webview", version = "0.2.0" }
-gpui-component-shell = { package = "gpui_ce_component_shell", path = "crates/component-shell", version = "0.2.0" }
 story = { path = "crates/story" }
 
 # GPUI CE is published to crates.io as `gpui-ce` with its platform, web and
@@ -86,6 +80,8 @@ reqwest = { version = "0.12.15-zed", package = "zed-reqwest", default-features =
 anyhow = "1"
 web-time = "1"
 log = "0.4"
+futures = "0.3"
+http = "1"
 palette = "0.7.6"
 lsp-types = { version = "0.97.0", features = ["proposed"] }
 notify = "8.2.0"
@@ -154,22 +150,6 @@ ropey = { opt-level = 3 }
 lsp-types = { opt-level = 3 }
 markdown = { opt-level = 3 }
 xml5ever = { opt-level = 3 }
-# `quickjs-jit` is a facade that re-exports `quickjs-jit-core`, so naming it alone
-# optimises neither the interpreter nor the bindings. `quickjs-jit-sys` builds
-# QuickJS itself through `cc`, which reads this package's opt-level; without
-# these two a debug build spends roughly three times as long in every script
-# render. See `website/shell/hosting.md`.
-quickjs-jit = { opt-level = 3 }
-quickjs-jit-runtime = { opt-level = 3 }
-quickjs-jit-sys = { opt-level = 3 }
-quickjs-jit-core = { opt-level = 3 }
-cap-std = { opt-level = 3 }
-
-[patch.crates-io]
-# LLRT's public modules still name their compatible binding dependency
-# `rquickjs`. Route those dependencies through a source-compatible facade so
-# the shell and LLRT share the exact same quickjs-jit types and VM.
-rquickjs = { path = "crates/shell/rquickjs-compat" }
 
 [workspace.metadata.typos]
 files.extend-exclude = ["**/fixtures/*"]
