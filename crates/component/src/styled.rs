@@ -7,6 +7,7 @@ use gpui::{
 pub use gpui_base::{FocusableExt, RoleOverride, StyledExt, box_shadow, h_flex, v_flex};
 
 use crate::ActiveTheme as _;
+use palette::WithAlpha as _;
 
 const FOCUS_RING_WIDTH: Pixels = px(3.);
 const FOCUS_RING_OPACITY: f32 = 0.5;
@@ -267,7 +268,7 @@ pub(crate) fn focus_style<T: Styled + ParentElement>(
         return focus_ring(
             element.border_color(theme.ring),
             window,
-            theme.ring.alpha(FOCUS_RING_OPACITY),
+            theme.ring.with_alpha(FOCUS_RING_OPACITY),
         );
     }
 
@@ -287,8 +288,8 @@ pub(crate) fn focus_style<T: Styled + ParentElement>(
     };
     // Shrinking or growing the box by `inset` keeps the line concentric with
     // the element's own corners.
-    let radius = corner_radii(element.style(), rem_size)
-        .map(|value| (*value - inset).max(Pixels::ZERO));
+    let radius =
+        corner_radii(element.style(), rem_size).map(|value| (*value - inset).max(Pixels::ZERO));
     element.child(
         div()
             .when(cfg!(test), |this| {
