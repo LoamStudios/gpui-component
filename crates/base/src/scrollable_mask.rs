@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gpui::{
-    App, AppContext as _, Axis, BorderStyle, Bounds, ContentMask, Edges, Element, ElementId, GlobalElementId,
+    App, Axis, BorderStyle, Bounds, ContentMask, Edges, Element, ElementId, GlobalElementId,
     Hitbox, Hsla, InteractiveElement as _, IntoElement, IsZero as _, LayoutId, OngoingScroll,
     PaintQuad, ParentElement as _, Point, Position, ScrollHandle, ScrollWheelEvent,
     StatefulInteractiveElement as _, Style, StyleRefinement, Styled as _, Window, div, px,
@@ -206,8 +206,6 @@ impl<H: ScrollbarHandle + Clone> Element for ScrollableMask<H> {
                     background: gpui::transparent_white().into(),
                     corner_radii: Corners::all(px(0.)),
                     border_style: BorderStyle::default(),
-                    border_dashed_gap: 0.0,
-                    border_dashed_length: 0.0,
                 });
             }
 
