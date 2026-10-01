@@ -1,7 +1,5 @@
 use std::fmt::Debug;
 
-use web_time::{Duration, Instant};
-
 /// A browser-style linear trail with a current entry.
 ///
 /// Entries before the current one can be revisited with [`back`](Self::back),
