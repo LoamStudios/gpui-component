@@ -1,8 +1,8 @@
 use std::{hash::Hash, rc::Rc};
 
 use gpui::{
-    AnyElement, App, Bounds, ElementId, Hsla, IntoElement, Pixels, Point, SharedString, TextAlign,
-    Window, point, px,
+    AnyElement, App, Bounds, ColorExt as _, ElementId, Hsla, IntoElement, Pixels, Point,
+    SharedString, TextAlign, Window, point, px,
 };
 use gpui_base::motion::spring;
 use gpui_component_macros::IntoPlot;

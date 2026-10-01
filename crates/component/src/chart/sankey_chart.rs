@@ -422,7 +422,15 @@ impl<T> SankeyChart<T> {
                 line.text.hash(&mut hasher);
                 line.font_size.map(f32::to_bits).hash(&mut hasher);
                 line.color
-                    .map(|color| [color.h, color.s, color.l, color.a].map(f32::to_bits))
+                    .map(|color| {
+                        [
+                            color.color.hue.into_degrees(),
+                            color.color.saturation,
+                            color.color.lightness,
+                            color.alpha,
+                        ]
+                        .map(f32::to_bits)
+                    })
                     .hash(&mut hasher);
             }
         }

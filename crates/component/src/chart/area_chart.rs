@@ -1,8 +1,8 @@
 use std::{hash::Hash, rc::Rc};
 
 use gpui::{
-    AnyElement, App, Background, Bounds, ElementId, Hsla, IntoElement, Pixels, Point, SharedString,
-    Size, Window, point, px,
+    AnyElement, App, Background, Bounds, ColorExt as _, ElementId, Hsla, IntoElement, Pixels,
+    Point, SharedString, Size, Window, point, px,
 };
 use gpui_component_macros::IntoPlot;
 
