@@ -5,20 +5,21 @@ use quote::quote;
 /// Resolve the GPUI API exposed to the crate where a macro is expanded.
 ///
 /// `gpui-kit` is preferred because it re-exports GPUI and is the only direct
-/// dependency required by kit consumers. The `gpui-pre` package fallback
-/// preserves standalone `gpui-component` consumers, including dependencies
-/// that rename that package to `gpui` (the conventional name).
+/// dependency required by kit consumers. The `gpui-ce` package fallback
+/// preserves standalone `gpui-component` consumers on GPUI CE, including
+/// dependencies that rename that package to `gpui` (the conventional name).
 pub(crate) fn gpui() -> syn::Result<TokenStream> {
     match crate_name("gpui-kit") {
         Ok(found) => Ok(found_crate_path(found)),
-        Err(kit_error) => crate_name("gpui-pre")
+        Err(kit_error) => crate_name("gpui_ce_kit")
+            .or_else(|_| crate_name("gpui-ce"))
             .map(found_crate_path)
-            .map_err(|gpui_error| {
+            .map_err(|ce_error| {
                 syn::Error::new(
                     Span::call_site(),
                     format!(
-                        "IntoPlot requires a direct dependency on `gpui-kit` or `gpui-pre`: \
-                         gpui-kit lookup failed: {kit_error}; gpui-pre lookup failed: {gpui_error}"
+                        "IntoPlot requires a direct dependency on `gpui-kit` or `gpui-ce`: \
+                         gpui-kit lookup failed: {kit_error}; gpui-ce lookup failed: {ce_error}"
                     ),
                 )
             }),
@@ -40,13 +41,15 @@ fn found_crate_path(found: FoundCrate) -> TokenStream {
 /// `gpui_kit::component`, standalone consumers as `gpui_component`, and the
 /// crate itself as `crate`.
 pub(crate) fn component() -> syn::Result<TokenStream> {
-    match crate_name("gpui-kit") {
+    match crate_name("gpui-kit").or_else(|_| crate_name("gpui_ce_kit")) {
         Ok(found) => {
             let kit = found_crate_path(found);
             Ok(quote!(#kit::component))
         }
-        Err(kit_error) => crate_name("gpui-component").map(found_crate_path).map_err(
-            |component_error| {
+        Err(kit_error) => crate_name("gpui_ce_components")
+            .or_else(|_| crate_name("gpui-component"))
+            .map(found_crate_path)
+            .map_err(|component_error| {
                 syn::Error::new(
                     Span::call_site(),
                     format!(
@@ -55,7 +58,6 @@ pub(crate) fn component() -> syn::Result<TokenStream> {
                          {component_error}"
                     ),
                 )
-            },
-        ),
+            }),
     }
 }
