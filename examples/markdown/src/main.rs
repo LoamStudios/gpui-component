@@ -1706,8 +1706,8 @@ mod tests {
             r"e^{i\pi} + 1 = 0",
             true,
             20.0,
-            Hsla::black(),
-            Hsla::white(),
+            gpui::black(),
+            gpui::white(),
         )
         .expect("install mathjax-full in docs/node_modules before running ignored MathJax tests");
 
@@ -1736,8 +1736,8 @@ mod tests {
             r"e^{i\pi} + 1 = 0",
             true,
             20.0,
-            Hsla::black(),
-            Hsla::white(),
+            gpui::black(),
+            gpui::white(),
         )
         .expect("install mathjax-full in docs/node_modules before running ignored MathJax tests");
 
@@ -1760,8 +1760,8 @@ mod tests {
             r"\frac{\alpha + \beta}{\sqrt{\gamma}} = \sum_{i=1}^{n} i^2",
             false,
             20.0,
-            Hsla::black(),
-            Hsla::white(),
+            gpui::black(),
+            gpui::white(),
         )
         .expect("install mathjax-full in docs/node_modules before running ignored MathJax tests");
 
@@ -1777,8 +1777,8 @@ mod tests {
             r"\frac{\alpha + \beta}{\sqrt{\gamma}} = \sum_{i=1}^{n} i^2",
             false,
             20.0,
-            Hsla::black(),
-            Hsla::white(),
+            gpui::black(),
+            gpui::white(),
         )
         .expect("install mathjax-full in docs/node_modules before running ignored MathJax tests");
 
@@ -1793,8 +1793,8 @@ mod tests {
             r"\frac{\alpha + \beta}{\sqrt{\gamma}} = \sum_{i=1}^{n} i^2",
             false,
             20.0,
-            Hsla::black(),
-            Hsla::white(),
+            gpui::black(),
+            gpui::white(),
         )
         .expect("install mathjax-full in docs/node_modules before running ignored MathJax tests");
 

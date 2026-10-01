@@ -1,3 +1,4 @@
+use gpui_kit as gpui;
 use gpui_kit::component::Root;
 use gpui_kit::{AppContext as _, Modifiers, TestAppContext, point, px};
 use gpui_kit_recipes::controlled_value::ControlledCheckbox;

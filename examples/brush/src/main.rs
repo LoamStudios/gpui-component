@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use gpui_kit::assets::Assets;
 use gpui_kit::component::{
-    ActiveTheme, Colorize as _, ElementExt, IconName, Sizable,
+    ActiveTheme, Colorize as _, IconName, Sizable,
     button::Button,
     checkbox::Checkbox,
     group_box::{GroupBox, GroupBoxVariants as _},
@@ -72,7 +72,7 @@ impl BrushStory {
             self.is_drawing = true;
             let brush_size = self.brush_size.read(cx).value().start();
             let brush_opacity = self.brush_opacity.read(cx).value().start();
-            let color = gpui_component::Colorize::opacity(&self.brush_color, brush_opacity);
+            let color = gpui_kit::component::Colorize::opacity(&self.brush_color, brush_opacity);
 
             let local_pos = if let Some(bounds) = self.canvas_bounds {
                 Point::new(
@@ -203,7 +203,7 @@ impl BrushStory {
 
         let state_entity = cx.entity().clone();
 
-        let base_div = gpui_component::ElementExt::on_prepaint(
+        let base_div = gpui_kit::component::ElementExt::on_prepaint(
             div()
                 .id("canvas")
                 .size_full()
@@ -239,7 +239,7 @@ impl BrushStory {
                     let size = prepaint_bounds.size;
 
                     if show_grid {
-                        let grid_color = gpui_component::Colorize::opacity(&theme.border, 0.2);
+                        let grid_color = gpui_kit::component::Colorize::opacity(&theme.border, 0.2);
                         let grid_size = 40.0;
 
                         let mut x = 0.0;
