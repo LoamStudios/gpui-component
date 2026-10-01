@@ -145,7 +145,7 @@ impl Root {
     }
 
     pub fn new(view: impl Into<AnyView>, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        #[cfg(all(target_os = "macos", not(test)))]
+        #[cfg(all(target_os = "macos", not(feature = "test-support")))]
         crate::install_window_hit_test_forwarder(window);
         let factories = cx
             .try_global::<PluginRegistry>()

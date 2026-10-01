@@ -33,7 +33,7 @@ mod index_path;
 pub mod input;
 mod link;
 mod list_settings;
-#[cfg(all(target_os = "macos", not(test)))]
+#[cfg(all(target_os = "macos", not(feature = "test-support")))]
 mod macos_accessibility;
 mod measure;
 pub mod motion;
@@ -119,7 +119,7 @@ pub use index_path::IndexPath;
 pub use input::{Editor, Input, InputBase, InputStyles, Textarea};
 pub use link::{Link, LinkStyles};
 pub use list_settings::ListSettings;
-#[cfg(all(target_os = "macos", not(test)))]
+#[cfg(all(target_os = "macos", not(feature = "test-support")))]
 #[doc(hidden)]
 pub use macos_accessibility::install_window_hit_test_forwarder;
 #[doc(hidden)]
