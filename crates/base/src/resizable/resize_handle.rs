@@ -390,7 +390,7 @@ impl<T: 'static, E: 'static + Render> Element for ResizeHandle<T, E> {
                 let hitbox = hitbox.clone();
                 move |ev: &MouseDownEvent, phase, window, _| {
                     if phase.bubble()
-                        && hitbox.is_hovered_at(ev.position, window)
+                        && hitbox.is_hovered(window)
                         && state.set(ResizeHandleState::Pressed)
                     {
                         window.refresh();
@@ -412,9 +412,7 @@ impl<T: 'static, E: 'static + Render> Element for ResizeHandle<T, E> {
                     // about whether the handle is still being dragged.
                     let next = match state.get() {
                         engaged if engaged.is_active() => ResizeHandleState::Dragging,
-                        _ if hitbox.is_hovered_at(ev.position, window) => {
-                            ResizeHandleState::Hovered
-                        }
+                        _ if hitbox.is_hovered(window) => ResizeHandleState::Hovered,
                         _ => ResizeHandleState::Idle,
                     };
                     if state.set(next) {
@@ -434,7 +432,7 @@ impl<T: 'static, E: 'static + Render> Element for ResizeHandle<T, E> {
                     // Releasing over the handle leaves it hovered. Going
                     // straight to idle there would drop the indicator for one
                     // frame and bring it back under a pointer that never left.
-                    let next = if hitbox.is_hovered_at(ev.position, window) {
+                    let next = if hitbox.is_hovered(window) {
                         ResizeHandleState::Hovered
                     } else {
                         ResizeHandleState::Idle
