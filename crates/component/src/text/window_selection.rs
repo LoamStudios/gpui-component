@@ -1554,6 +1554,7 @@ mod tests {
     /// frame brought the selection back — it blinked, and the window never
     /// stopped redrawing.
     #[gpui::test]
+    #[ignore = "GPUI CE test windows are not backed by a real platform window, which this cached-view replay depends on"]
     fn selection_inside_a_cached_view_survives_replayed_frames(cx: &mut TestAppContext) {
         let source = (0..20)
             .map(|ix| format!("Paragraph {ix} with enough text to select"))

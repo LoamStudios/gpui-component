@@ -380,9 +380,9 @@ mod tests {
     #[test]
     fn legacy_default_style_keeps_active_component_theme_colors() {
         let mut theme = Theme::default();
-        theme.foreground = gpui::rgb(0xf4f4f5).into();
-        theme.link = gpui::rgb(0x38bdf8).into();
-        theme.selection = gpui::rgba(0x2563eb66).into();
+        theme.foreground = gpui::rgb_to_hsla(gpui::rgb(0xf4f4f5));
+        theme.link = gpui::rgb_to_hsla(gpui::rgb(0x38bdf8));
+        theme.selection = gpui::rgb_to_hsla(gpui::rgba(0x2563eb66));
 
         let style = super::compat::resolve_component_style(&theme, super::TextViewStyle::default());
 
