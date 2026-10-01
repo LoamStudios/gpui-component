@@ -218,7 +218,7 @@ fn select_emits_one_dismiss_event_for_each_open_to_closed_transition(cx: &mut Te
                 match close {
                     "escape" => window.press("escape", cx),
                     "outside" => window.click("agree", cx),
-                    "blur" => window.blur(cx),
+                    "blur" => window.blur(),
                     "confirm" => window.press("enter", cx),
                     _ => unreachable!(),
                 }
@@ -236,7 +236,7 @@ fn select_emits_one_dismiss_event_for_each_open_to_closed_transition(cx: &mut Te
                 // Follow-up Escape and blur notifications must not dismiss twice.
                 language.update(cx, |language, cx| language.focus(window, cx));
                 window.press("escape", cx);
-                window.blur(cx);
+                window.blur();
                 window.render_frame(cx);
             })
             .unwrap();

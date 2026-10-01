@@ -1,4 +1,5 @@
 mod common;
+use gpui_kit as gpui;
 use gpui_kit::test::{TestSupportExt, TestWindowExt};
 use gpui_kit::{
     AppContext, Context, Entity, Role, SharedString, TestAppContext, Window,

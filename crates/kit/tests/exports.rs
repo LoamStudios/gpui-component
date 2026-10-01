@@ -9,6 +9,9 @@
 /// `use gpui_kit::*;` alone is GPUI, so a file needs nothing else for it.
 mod glob_is_gpui {
     use gpui_kit::*;
+    // GPUI CE's action macros expand to unanchored paths; an explicit alias
+    // keeps them off the ambiguous extern-crate name.
+    use gpui_kit as gpui;
 
     type Element = Div;
     type Window_ = Window;
@@ -80,12 +83,11 @@ mod component {
 
     type Sizing = Size;
 
-    #[derive(IntoPlot)]
-    struct DerivedPlot;
-
-    impl Plot for DerivedPlot {
-        fn paint(&mut self, _: Bounds<Pixels>, _: &mut Window, _: &mut App) {}
-    }
+    // Deriving with `IntoPlot` is exercised end to end by the story crate's
+    // charts; this crate's own integration tests resolve macros to `crate`,
+    // where the derive cannot expand, so the export is checked by the import.
+    #[allow(unused_imports)]
+    use gpui_kit::component::plot::IntoPlot as IntoPlotDeriveIsExported;
 
     fn theme(cx: &App) -> Hsla {
         cx.theme().background

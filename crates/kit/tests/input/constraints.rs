@@ -519,7 +519,7 @@ fn disabled_single_and_double_click_do_not_focus_the_editor(cx: &mut TestAppCont
                 if preserve_focus {
                     previous_focus.focus(window, cx);
                 } else {
-                    window.blur(cx);
+                    window.blur();
                 }
                 window.render_frame(cx);
                 let before = window.focused(cx);
@@ -561,7 +561,7 @@ fn enabling_a_disabled_input_allows_mouse_focus_and_replacement(cx: &mut TestApp
     })
     .unwrap();
     // Render the disabled state before enabling the same retained input.
-    ui(handle, cx, |window, cx| window.blur(cx));
+    ui(handle, cx, |window, _cx| window.blur());
     common::update_content(handle, &view, cx, |view, _, cx| {
         view.disabled = false;
         cx.notify();

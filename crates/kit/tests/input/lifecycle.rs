@@ -264,7 +264,7 @@ fn focus_and_blur_events_fire_once_per_transition_across_all_controls(cx: &mut T
             expected
         );
 
-        cx.update_window(handle.into(), |_, window, cx| window.blur(cx))
+        cx.update_window(handle.into(), |_, window, _cx| window.blur())
             .unwrap();
         cx.run_until_parked();
         expected[ix][1] += 1;
@@ -313,7 +313,7 @@ fn disabling_focused_controls_blocks_edits_and_click_focus_until_reenabled(
             );
             assert_eq!(window.find(id.clone()).value(), Some("saved🦀"));
 
-            window.blur(cx);
+            window.blur();
         })
         .unwrap();
         cx.run_until_parked();

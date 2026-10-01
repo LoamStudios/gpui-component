@@ -5,6 +5,7 @@
 //! `test-support` on, the glob also brings in GPUI's `test` attribute, which
 //! would shadow the built-in `#[test]` the expansion relies on.
 
+use gpui_kit as gpui;
 use gpui_kit::{AppContext as _, TestAppContext};
 
 struct Counter(u32);
