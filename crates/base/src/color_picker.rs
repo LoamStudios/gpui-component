@@ -31,7 +31,7 @@ pub(crate) fn init(cx: &mut App) {
 }
 
 /// Parses `#rgb`, `#rgba`, `#rrggbb`, and `#rrggbbaa`, with or without the `#`.
-fn parse_hex(value: &str) -> Option<Hsla> {
+pub(crate) fn parse_hex(value: &str) -> Option<Hsla> {
     let value = value.strip_prefix('#').unwrap_or(value);
     // `from_str_radix` accepts a leading sign, so reject anything that is not
     // purely hexadecimal before slicing components out of it.
