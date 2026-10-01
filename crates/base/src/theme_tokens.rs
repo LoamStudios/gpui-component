@@ -3,7 +3,9 @@
 //! These tokens describe visual roles and scales. They intentionally do not
 //! contain component names such as `button`, `table`, or `sidebar`.
 
-use gpui::{BoxShadow, FontWeight, Hsla, Pixels, SharedString, hsla, point, px, rgb};
+use gpui::{BoxShadow, FontWeight, Hsla, Pixels, SharedString, hsla, point, px, rgb, rgb_to_hsla};
+use palette::WithAlpha as _;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -58,6 +60,7 @@ pub struct ColorTokens {
     /// wash that leaves the text legible. It carries a serde default so
     /// palettes written before the token existed still load.
     #[serde(default = "ColorTokens::default_selection")]
+    #[schemars(schema_with = "gpui::hsla_schemar")]
     pub selection: Hsla,
 }
 
@@ -88,7 +91,7 @@ impl ColorTokens {
             border: hsla(0., 0., 0.898, 1.),
             input: hsla(0., 0., 0.898, 1.),
             ring: hsla(0., 0., 0.639, 1.),
-            selection: Hsla::from(rgb(0x55a0fc)).alpha(0.3),
+            selection: rgb_to_hsla(rgb(0x55a0fc)).with_alpha(0.3),
         }
     }
 
@@ -112,7 +115,7 @@ impl ColorTokens {
             border: hsla(0., 0., 0.149, 1.),
             input: hsla(0., 0., 47. / 255., 1.),
             ring: hsla(0., 0., 0.451, 1.),
-            selection: Hsla::from(rgb(0x1d4ed8)).alpha(0.3),
+            selection: rgb_to_hsla(rgb(0x1d4ed8)).with_alpha(0.3),
         }
     }
 
@@ -262,10 +265,10 @@ mod tests {
         let dark = ColorTokens::dark();
 
         assert_eq!(ColorTokens::default(), light);
-        assert_eq!(light.background.l, 1.);
-        assert!(light.foreground.l < light.background.l);
-        assert!(dark.background.l < dark.foreground.l);
-        assert_eq!(light.primary.a, 1.);
-        assert_eq!(dark.primary.a, 1.);
+        assert_eq!(light.background.color.lightness, 1.);
+        assert!(light.foreground.color.lightness < light.background.color.lightness);
+        assert!(dark.background.color.lightness < dark.foreground.color.lightness);
+        assert_eq!(light.primary.alpha, 1.);
+        assert_eq!(dark.primary.alpha, 1.);
     }
 }
