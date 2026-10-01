@@ -553,7 +553,7 @@ impl Render for SidebarStory {
                                     .default_open(ix == 0)
                                     .click_to_open(self.click_to_open_submenu)
                                     .when(is_active, |this| {
-                                        this.border_1().border_color(Hsla::white())
+                                        this.border_1().border_color(gpui::white())
                                     })
                                     .when(ix == 0, |this| {
                                         this.context_menu({

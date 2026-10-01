@@ -9,8 +9,8 @@ use gpui_kit::component::{
     v_flex,
 };
 use gpui_kit::{
-    App, AppContext as _, Axis, Context, Entity, FocusHandle, Focusable, IntoElement,
-    ParentElement as _, Render, Styled as _, Window, rems,
+    App, AppContext as _, Axis, ColorExt as _, Context, Entity, FocusHandle, Focusable,
+    IntoElement, ParentElement as _, Render, Styled as _, Window, rems,
 };
 
 use crate::{Story, section};

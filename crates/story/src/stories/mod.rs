@@ -59,7 +59,6 @@ mod separator_story;
 mod settings_story;
 mod sheet_story;
 #[cfg(not(target_family = "wasm"))]
-mod shell_story;
 mod shimmer_story;
 mod sidebar_story;
 mod skeleton_story;
@@ -138,7 +137,6 @@ pub use separator_story::SeparatorStory;
 pub use settings_story::SettingsStory;
 pub use sheet_story::SheetStory;
 #[cfg(not(target_family = "wasm"))]
-pub use shell_story::ShellStory;
 pub use shimmer_story::ShimmerStory;
 pub use sidebar_story::SidebarStory;
 pub use skeleton_story::SkeletonStory;

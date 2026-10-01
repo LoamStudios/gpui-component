@@ -1,6 +1,8 @@
 //! A chat composer shared by the Input and Textarea stories. Commands, images,
 //! skills and people are inserted as atomic inline tokens; the application
 //! maps a token's ID back to the resource it names.
+#[cfg(test)]
+use gpui_kit as gpui;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::{
     ActiveTheme as _, Disableable as _, Sizable as _,

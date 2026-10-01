@@ -13,9 +13,9 @@ use gpui_kit::component::{
     v_flex,
 };
 use gpui_kit::{
-    App, AppContext as _, Context, Entity, FocusHandle, Focusable, IntoElement, ParentElement as _,
-    Render, SharedString, Styled as _, Subscription, Window, div, prelude::FluentBuilder as _,
-    rems,
+    App, AppContext as _, ColorExt as _, Context, Entity, FocusHandle, Focusable, IntoElement,
+    ParentElement as _, Render, SharedString, Styled as _, Subscription, Window, div,
+    prelude::FluentBuilder as _, rems,
 };
 
 use crate::{Story, section};

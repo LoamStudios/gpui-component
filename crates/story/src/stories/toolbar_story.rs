@@ -15,6 +15,9 @@ use gpui_kit::{
     Action, App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement,
     IntoElement, ParentElement, Render, Styled, Window, div, px,
 };
+// GPUI CE's action macros expand to unanchored paths; an explicit alias keeps
+// them off the ambiguous extern-crate name.
+use gpui_kit as gpui;
 use serde::Deserialize;
 
 use crate::{ChangeStorySize, section, story_toolbar_group};

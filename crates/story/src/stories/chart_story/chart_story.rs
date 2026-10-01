@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use gpui_kit as gpui;
 use gpui_kit::assets::IconName;
 use gpui_kit::base::ElementExt as _;
 use gpui_kit::component::{
@@ -17,15 +18,16 @@ use gpui_kit::component::{
     v_flex,
 };
 use gpui_kit::{
-    AnyElement, App, AppContext, Background, Context, Corners, ElementId, Entity, FocusHandle,
-    Focusable, FontWeight, Hsla, InteractiveElement as _, IntoElement, ListAlignment, ListState,
-    ParentElement, Pixels, Render, Rgba, SharedString, Styled, Window, div, linear_color_stop,
+    AnyElement, App, AppContext, Background, ColorExt as _, Context, Corners, ElementId, Entity,
+    FocusHandle, Focusable, FontWeight, Hsla, InteractiveElement as _, IntoElement, ListAlignment,
+    ListState, ParentElement, Pixels, Render, SharedString, Styled, Window, div, linear_color_stop,
     linear_gradient, list, prelude::FluentBuilder, px,
 };
 use serde::Deserialize;
 
 use super::StackedBarChart;
 use crate::{Story, story_toolbar_group};
+use palette::WithAlpha as _;
 
 /// The height of one chart card, and the list's overdraw: the virtual list
 /// keeps one row of cards live on either side of the viewport.
@@ -464,7 +466,7 @@ enum ChartCard {
 /// the full color, each next one a step more transparent, so a pie or a bar
 /// group reads as one ramp rather than five competing hues.
 fn shade(base: Hsla, index: usize) -> Hsla {
-    base.alpha(1. - 0.14 * index as f32)
+    base.with_alpha(1. - 0.14 * index as f32)
 }
 
 /// A stable ramp position for a category name, so the same category keeps its
@@ -1081,11 +1083,19 @@ impl ChartCard {
                                     |x: f32, y: f32| -> f32 { (x * w + (h - y) * h) / denom };
                                 let lo = project(bar.origin.x, bar.origin.y + bar.size.height);
                                 let hi = project(bar.origin.x + bar.size.width, bar.origin.y);
-                                let lerp = |t: f32| Hsla {
-                                    h: c1.h + (c2.h - c1.h) * t,
-                                    s: c1.s + (c2.s - c1.s) * t,
-                                    l: c1.l + (c2.l - c1.l) * t,
-                                    a: c1.a + (c2.a - c1.a) * t,
+                                let lerp = |t: f32| {
+                                    gpui::hsla(
+                                        (c1.color.hue.into_degrees()
+                                            + (c2.color.hue.into_degrees()
+                                                - c1.color.hue.into_degrees())
+                                                * t)
+                                            / 360.,
+                                        c1.color.saturation
+                                            + (c2.color.saturation - c1.color.saturation) * t,
+                                        c1.color.lightness
+                                            + (c2.color.lightness - c1.color.lightness) * t,
+                                        c1.alpha + (c2.alpha - c1.alpha) * t,
+                                    )
                                 };
                                 linear_gradient(
                                     45.,
@@ -1513,9 +1523,10 @@ impl ChartStory {
                         name: node.name.clone(),
                         value: node.value.parse().unwrap_or(0.),
                         growth: node.growth.parse().ok(),
-                        color: Rgba::try_from(node.color.as_ref())
-                            .map(Into::into)
-                            .unwrap_or(gpui_kit::black()),
+                        color: <gpui::Hsla as gpui_kit::component::Colorize>::parse_hex(
+                            node.color.as_ref(),
+                        )
+                        .unwrap_or(gpui_kit::black()),
                     })
                     .collect();
                 // Skip links with unknown node keys or unparsable values

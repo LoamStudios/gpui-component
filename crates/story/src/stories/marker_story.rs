@@ -10,8 +10,8 @@ use gpui_kit::component::{
     v_flex,
 };
 use gpui_kit::{
-    App, AppContext as _, Context, Entity, FocusHandle, Focusable, IntoElement, ParentElement as _,
-    Render, StyleRefinement, Styled as _, Window, rems,
+    App, AppContext as _, ColorExt as _, Context, Entity, FocusHandle, Focusable, IntoElement,
+    ParentElement as _, Render, StyleRefinement, Styled as _, Window, rems,
 };
 use std::time::Duration;
 

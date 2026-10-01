@@ -443,11 +443,9 @@ impl StockTableDelegate {
     fn render_percent(&self, col: &Column, val: f64, cx: &mut App) -> AnyElement {
         self.value_cell(col)
             .when_some(change_colors(val, cx), |this, (foreground, background)| {
-                {
-                    let mut background = background;
-                    background.alpha = 0.05;
-                    this.text_color(foreground).bg(background)
-                }
+                let mut background = background;
+                background.alpha = 0.05;
+                this.text_color(foreground).bg(background)
             })
             .child(format!("{:+.2}%", val * 100.))
             .into_any_element()
