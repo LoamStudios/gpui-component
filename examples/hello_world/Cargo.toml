@@ -7,7 +7,7 @@ edition.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-gpui-kit.workspace = true
+gpui-kit = { workspace = true, features = ["component", "assets"] }
 
 [lints]
 workspace = true

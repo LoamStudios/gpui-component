@@ -9,7 +9,7 @@ edition.workspace = true
 inspector = []
 
 [dependencies]
-gpui-kit.workspace = true
+gpui-kit = { workspace = true, features = ["component", "assets"] }
 anyhow.workspace = true
 
 # WebView dependencies

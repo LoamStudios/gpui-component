@@ -6,7 +6,7 @@ publish = false
 edition.workspace = true
 
 [dependencies]
-gpui-kit.workspace = true
+gpui-kit = { workspace = true, features = ["component", "assets"] }
 anyhow.workspace = true
 rust-embed = { version = "8", features = ["interpolate-folder-path"] }
 

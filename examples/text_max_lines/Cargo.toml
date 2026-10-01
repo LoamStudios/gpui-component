@@ -6,8 +6,7 @@ publish = false
 edition.workspace = true
 
 [dependencies]
-gpui-kit.workspace = true
-reqwest_client.workspace = true
+gpui-kit = { workspace = true, features = ["component", "assets"] }
 anyhow.workspace = true
 
 [lints]

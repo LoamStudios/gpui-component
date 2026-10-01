@@ -6,7 +6,7 @@ publish = false
 edition.workspace = true
 
 [dependencies]
-gpui-kit.workspace = true
+gpui-kit = { workspace = true, features = ["component", "assets"] }
 
 [dev-dependencies]
 gpui-kit = { workspace = true, features = ["test-support"] }

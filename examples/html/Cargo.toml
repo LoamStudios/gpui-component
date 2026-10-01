@@ -5,7 +5,7 @@ publish = false
 edition.workspace = true
 
 [dependencies]
-gpui-kit.workspace = true
+gpui-kit = { workspace = true, features = ["component", "assets"] }
 gpui-component-story = { path = "../../crates/story" }
 
 [lints]
