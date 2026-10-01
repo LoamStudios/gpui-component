@@ -17,14 +17,6 @@ edition.workspace = true
 name = "gpui_base"
 doctest = false
 
-[[bench]]
-name = "motion"
-harness = false
-
-[[bench]]
-name = "text_view_scroll"
-harness = false
-
 [features]
 decimal = ["dep:rust_decimal"]
 test-support = ["gpui/test-support"]
