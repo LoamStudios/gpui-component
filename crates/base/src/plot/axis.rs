@@ -114,7 +114,7 @@ impl PlotAxis {
             y_labels: Vec::new(),
             y_axis: false,
             y_label_side: AxisLabelSide::default(),
-            stroke: Hsla::default().into(),
+            stroke: Background::from(gpui::transparent_black()),
         }
     }
 
