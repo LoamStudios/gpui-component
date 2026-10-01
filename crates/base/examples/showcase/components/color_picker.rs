@@ -1,5 +1,5 @@
 use super::*;
-use gpui::{Focusable as _, MouseButton, rgb_to_hsla};
+use gpui::{Focusable as _, MouseButton};
 
 impl BaseShowcase {
     pub(in super::super) fn color_picker(
@@ -15,9 +15,7 @@ impl BaseShowcase {
         let picker = self.color_picker.read(cx);
         let open = picker.is_open();
         let selected = picker.value();
-        let displayed = picker
-            .displayed_color()
-            .unwrap_or_else(|| rgb_to_hsla(rgb(0x171717)));
+        let displayed = picker.displayed_color().unwrap_or(example_rgb(0x171717));
         let hex = picker.hex_input().read(cx).value();
         let focus_handle = picker.focus_handle(cx);
         let hex_input = picker.hex_input().clone();
@@ -33,8 +31,8 @@ impl BaseShowcase {
             .items_center()
             .gap_2()
             .border_1()
-            .border_color(rgb(0x171717))
-            .bg(rgb(0xffffff))
+            .border_color(super::example_rgb(0x171717))
+            .bg(super::example_rgb(0xffffff))
             .on_click(move |_, _, cx| {
                 trigger_state.update(cx, |state, cx| state.toggle_open(cx));
             })
@@ -43,18 +41,18 @@ impl BaseShowcase {
                     .size(px(14.))
                     .bg(displayed)
                     .border_1()
-                    .border_color(rgb(0x171717)),
+                    .border_color(super::example_rgb(0x171717)),
             )
             .child(hex)
             .child(div().flex_1())
-            .child(if open { "⌃" } else { "⌄" });
+            .child(super::chevron(open));
 
         let swatches = div().flex().gap_1().children(
             [0xdc2626u32, 0xd97706, 0x16a34a, 0x2563eb, 0x7c3aed]
                 .into_iter()
                 .enumerate()
                 .map(|(index, value)| {
-                    let color = rgb_to_hsla(rgb(value));
+                    let color = super::example_rgb(value);
                     let hover_state = state.clone();
                     let click_state = state.clone();
                     ColorSwatch::new(("swatch", index), color)
@@ -63,9 +61,9 @@ impl BaseShowcase {
                         .bg(color)
                         .border_1()
                         .border_color(if selected == Some(color) {
-                            rgb(0x171717)
+                            super::example_rgb(0x171717)
                         } else {
-                            rgb(0xffffff)
+                            super::example_rgb(0xffffff)
                         })
                         // Hovering previews without committing; leaving restores
                         // the committed color.
@@ -93,19 +91,19 @@ impl BaseShowcase {
             .flex_col()
             .gap_2()
             .border_1()
-            .border_color(rgb(0x171717))
-            .bg(rgb(0xffffff))
+            .border_color(super::example_rgb(0x171717))
+            .bg(super::example_rgb(0xffffff))
             .child(swatches)
             .child(
                 InputBase::new("color-hex-input")
                     .w_full()
                     .h_7()
                     .px_2()
-                    .flex()
-                    .items_center()
                     .border_1()
-                    .border_color(rgb(0xd4d4d4))
-                    .styles(|styles| styles.focused(|style| style.border_color(rgb(0x171717))))
+                    .border_color(super::example_rgb(0xd4d4d4))
+                    .styles(|styles| {
+                        styles.focused(|style| style.border_color(super::example_rgb(0x171717)))
+                    })
                     .on_mouse_down(MouseButton::Left, move |_, window, cx| {
                         hex_input.update(cx, |input, cx| input.focus(window, cx));
                     })

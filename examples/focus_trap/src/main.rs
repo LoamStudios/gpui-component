@@ -1,5 +1,5 @@
-use gpui::*;
-use gpui_component::{button::*, h_flex, v_flex, *};
+use gpui_kit::component::{button::*, h_flex, v_flex, *};
+use gpui_kit::*;
 
 pub struct Example {
     trap1_handle: FocusHandle,
@@ -111,7 +111,7 @@ impl Render for Example {
                             .p_4()
                             .grid()
                             .grid_cols(4)
-                            .bg(gpui_component::Colorize::opacity(&cx.theme().accent, 0.1))
+                            .bg(gpui_kit::component::Colorize::opacity(&cx.theme().accent, 0.1))
                             .rounded(cx.theme().radius)
                             .border_1()
                             .border_color(cx.theme().accent)
@@ -133,23 +133,17 @@ impl Render for Example {
 }
 
 fn main() {
-    let app = gpui_platform::application();
+    let app = gpui_kit::application();
 
     app.run(move |cx| {
-        gpui_component::init(cx);
+        gpui_kit::init(cx);
 
         let window_options = WindowOptions {
             window_bounds: Some(WindowBounds::centered(size(px(800.), px(600.)), cx)),
             ..Default::default()
         };
 
-        cx.spawn(async move |cx| {
-            cx.open_window(window_options, |window, cx| {
-                let view = cx.new(|cx| Example::new(cx));
-                cx.new(|cx| Root::new(view, window, cx).bg(cx.theme().background))
-            })
+        gpui_kit::open_window(window_options, cx, |_, cx| cx.new(|cx| Example::new(cx)))
             .expect("Failed to open window");
-        })
-        .detach();
     });
 }

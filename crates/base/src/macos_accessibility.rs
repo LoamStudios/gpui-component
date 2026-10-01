@@ -40,7 +40,13 @@ extern "C" fn hit_test_forwarder(this: &NSWindow, _cmd: Sel, point: NSPoint) -> 
 }
 
 fn ns_view(window: &Window) -> Option<&NSView> {
-    let handle = HasWindowHandle::window_handle(window).ok()?;
+    // GPUI CE's test windows are not backed by a platform window and panic in
+    // `window_handle`; they have no AppKit view to install anything on.
+    let handle = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        HasWindowHandle::window_handle(window).ok()
+    }))
+    .ok()
+    .flatten()?;
     let RawWindowHandle::AppKit(handle) = handle.as_raw() else {
         return None;
     };

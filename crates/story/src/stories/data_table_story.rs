@@ -6,13 +6,7 @@ use std::{
 };
 
 use fake::Fake;
-use gpui::{
-    Action, AnyElement, App, AppContext, ClickEvent, Context, Div, Entity, Focusable, Hsla,
-    InteractiveElement, IntoElement, ParentElement, Render, SharedString, Stateful,
-    StatefulInteractiveElement, Styled, Subscription, Task, TextAlign, Window, div,
-    prelude::FluentBuilder as _, px,
-};
-use gpui_component::{
+use gpui_kit::component::{
     ActiveTheme as _, Sizable as _, Size, StyleSized as _, StyledExt,
     button::Button,
     h_flex,
@@ -24,7 +18,8 @@ use gpui_component::{
     },
     v_flex,
 };
-use gpui_component::Colorize as _;
+use gpui_kit::prelude::FluentBuilder as _;
+use gpui_kit::*;
 use serde::{Deserialize, Serialize};
 
 use crate::story_toolbar_group;
@@ -448,11 +443,9 @@ impl StockTableDelegate {
     fn render_percent(&self, col: &Column, val: f64, cx: &mut App) -> AnyElement {
         self.value_cell(col)
             .when_some(change_colors(val, cx), |this, (foreground, background)| {
-                {
-                    let mut background = background;
-                    background.alpha = 0.05;
-                    this.text_color(foreground).bg(background)
-                }
+                let mut background = background;
+                background.alpha = 0.05;
+                this.text_color(foreground).bg(background)
             })
             .child(format!("{:+.2}%", val * 100.))
             .into_any_element()
@@ -932,7 +925,7 @@ impl super::Story for DataTableStory {
 }
 
 impl Focusable for DataTableStory {
-    fn focus_handle(&self, cx: &gpui::App) -> gpui::FocusHandle {
+    fn focus_handle(&self, cx: &gpui_kit::App) -> gpui_kit::FocusHandle {
         self.table.focus_handle(cx)
     }
 }
@@ -1138,7 +1131,7 @@ impl DataTableStory {
     async fn write_csv(
         table: Entity<TableState<StockTableDelegate>>,
         path: PathBuf,
-        window: &mut gpui::AsyncWindowContext,
+        window: &mut gpui_kit::AsyncWindowContext,
     ) -> anyhow::Result<()> {
         let (headers, rows_count) = table.update_in(window, |table, _, cx| {
             (table.headers(cx), table.delegate().rows_count(cx))
@@ -1176,7 +1169,7 @@ impl DataTableStory {
 }
 
 impl Render for DataTableStory {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl gpui_kit::IntoElement {
         let table = &self.table.read(cx);
         let delegate = table.delegate();
         let rows_count = delegate.rows_count(cx);

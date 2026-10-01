@@ -1,6 +1,6 @@
-use gpui::*;
-use gpui_component::{button::*, menu::ContextMenuExt, text::TextView, *};
-use gpui_component_assets::Assets;
+use gpui_kit::assets::Assets;
+use gpui_kit::component::{button::*, menu::ContextMenuExt, text::TextView, *};
+use gpui_kit::*;
 
 actions!(class_menu, [Open, Delete, Export, Info]);
 
@@ -35,9 +35,9 @@ impl HelloWorld {
 }
 
 impl Render for HelloWorld {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
-            .bg(gpui::white())
+            .bg(gpui_kit::white())
             .size_full()
             .child(TitleBar::new().child("Dialog & Sheet"))
             .child(
@@ -81,11 +81,11 @@ impl Render for HelloWorld {
                             .h_40()
                             .border_1()
                             .border_dashed()
-                            .border_color(gpui::black())
+                            .border_color(gpui_kit::black())
                             .items_center()
                             .justify_center()
                             .hover(|this| {
-                                this.bg(gpui_component::Colorize::opacity(&gpui::yellow(), 0.2))
+                                this.bg(gpui_kit::ColorExt::opacity(&gpui_kit::yellow(), 0.2))
                             })
                             .child("Hover test here.")
                             .child("Right click to show Context Menu")
@@ -101,25 +101,18 @@ impl Render for HelloWorld {
                             }),
                     ),
             )
-            .children(Root::render_dialog_layer(window, cx))
-            .children(Root::render_sheet_layer(window, cx))
     }
 }
 
 fn main() {
-    let app = gpui_platform::application().with_assets(Assets);
+    let app = gpui_kit::application().with_assets(Assets);
 
     app.run(move |cx| {
-        gpui_component::init(cx);
+        gpui_kit::init(cx);
 
-        cx.spawn(async move |cx| {
-            cx.open_window(TitleBar::window_options(), |window, cx| {
-                let view = cx.new(|_| HelloWorld);
-                // This first level on the window, should be a Root.
-                cx.new(|cx| Root::new(view, window, cx))
-            })
-            .expect("Failed to open window");
+        gpui_kit::open_window(TitleBar::window_options(), cx, |_, cx| {
+            cx.new(|_| HelloWorld)
         })
-        .detach();
+        .expect("Failed to open window");
     });
 }
