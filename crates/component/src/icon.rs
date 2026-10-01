@@ -193,7 +193,10 @@ impl Icon {
             })
             .map(|this| match self.source {
                 IconSource::Path(path) => this.path(path),
-                IconSource::Data(data) => this.data(&data),
+                // GPUI CE's Svg renders only asset paths; a data icon keeps
+                // its bytes for builders and clones but paints nothing until
+                // GPUI CE grows an inline-data API.
+                IconSource::Data(_) => this,
             })
             .when_some(self.transformation, |this, transformation| {
                 this.with_transformation(transformation)
@@ -206,8 +209,8 @@ impl Styled for Icon {
         &mut self.style
     }
 
-    fn text_color(mut self, color: impl Into<Hsla>) -> Self {
-        self.text_color = Some(color.into());
+    fn text_color(mut self, color: impl palette::IntoColor<Hsla>) -> Self {
+        self.text_color = Some(color.into_color());
         self
     }
 }
