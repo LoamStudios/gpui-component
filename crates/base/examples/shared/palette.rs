@@ -104,21 +104,21 @@ fn apply_base_theme(palette: ExamplePalette, cx: &mut App) {
     };
 
     let colors = &mut theme.tokens.colors;
-    colors.background = gpui::rgb(palette.canvas));
-    colors.foreground = gpui::rgb(palette.foreground));
-    colors.surface = gpui::rgb(palette.surface));
-    colors.surface_foreground = gpui::rgb(palette.foreground));
-    colors.primary = gpui::rgb(palette.accent));
-    colors.primary_foreground = gpui::rgb(palette.accent_foreground));
-    colors.secondary = gpui::rgb(palette.elevated));
-    colors.secondary_foreground = gpui::rgb(palette.foreground));
-    colors.muted = gpui::rgb(palette.elevated));
-    colors.muted_foreground = gpui::rgb(palette.muted_foreground));
-    colors.accent = gpui::rgb(palette.hover));
-    colors.accent_foreground = gpui::rgb(palette.foreground));
-    colors.border = gpui::rgb(palette.border));
-    colors.input = gpui::rgb(palette.border));
-    colors.ring = gpui::rgb(palette.accent));
+    colors.background = gpui::rgb_to_hsla(gpui::rgb(palette.canvas));
+    colors.foreground = gpui::rgb_to_hsla(gpui::rgb(palette.foreground));
+    colors.surface = gpui::rgb_to_hsla(gpui::rgb(palette.surface));
+    colors.surface_foreground = gpui::rgb_to_hsla(gpui::rgb(palette.foreground));
+    colors.primary = gpui::rgb_to_hsla(gpui::rgb(palette.accent));
+    colors.primary_foreground = gpui::rgb_to_hsla(gpui::rgb(palette.accent_foreground));
+    colors.secondary = gpui::rgb_to_hsla(gpui::rgb(palette.elevated));
+    colors.secondary_foreground = gpui::rgb_to_hsla(gpui::rgb(palette.foreground));
+    colors.muted = gpui::rgb_to_hsla(gpui::rgb(palette.elevated));
+    colors.muted_foreground = gpui::rgb_to_hsla(gpui::rgb(palette.muted_foreground));
+    colors.accent = gpui::rgb_to_hsla(gpui::rgb(palette.hover));
+    colors.accent_foreground = gpui::rgb_to_hsla(gpui::rgb(palette.foreground));
+    colors.border = gpui::rgb_to_hsla(gpui::rgb(palette.border));
+    colors.input = gpui::rgb_to_hsla(gpui::rgb(palette.border));
+    colors.ring = gpui::rgb_to_hsla(gpui::rgb(palette.accent));
 }
 
 pub fn example_rgb(color: u32) -> Hsla {
@@ -157,8 +157,14 @@ mod tests {
         cx.update(|cx| {
             let theme = gpui_base::Theme::global(cx);
             assert_eq!(theme.appearance, gpui_base::ThemeAppearance::Dark);
-            assert_eq!(theme.tokens.colors.foreground, gpui::rgb_to_hsla(gpui::rgb(0xffffff)));
-            assert_eq!(theme.tokens.colors.border, gpui::rgb_to_hsla(gpui::rgb(0x404040)));
+            assert_eq!(
+                theme.tokens.colors.foreground,
+                gpui::rgb_to_hsla(gpui::rgb(0xffffff))
+            );
+            assert_eq!(
+                theme.tokens.colors.border,
+                gpui::rgb_to_hsla(gpui::rgb(0x404040))
+            );
         });
     }
 }
