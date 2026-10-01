@@ -163,13 +163,13 @@ pub(super) fn sync_native_content_type(
         return;
     }
 
-    #[cfg(all(target_os = "macos", not(test)))]
+    #[cfg(all(target_os = "macos", not(feature = "test-support")))]
     gpui_base::input::set_text_content_type(
         window,
         content_type.and_then(InputContentType::ns_text_content_type),
     );
 
-    #[cfg(any(not(target_os = "macos"), test))]
+    #[cfg(any(not(target_os = "macos"), feature = "test-support"))]
     let _ = (window, content_type);
 }
 
