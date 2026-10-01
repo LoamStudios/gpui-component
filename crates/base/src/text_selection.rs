@@ -8,9 +8,9 @@ use std::{
 use gpui::{
     App, AppContext as _, Bounds, Context, Element, ElementId, Entity, EntityId, EventEmitter,
     Global, GlobalElementId, Half, Hitbox, HitboxBehavior, Hsla, InputEvent as _,
-    InspectorElementId, IntoElement, LayoutId, LongPressEvent, MouseButton, MouseDownEvent,
-    MouseMoveEvent, MouseUpEvent, Pixels, Point, ScrollDelta, ScrollWheelEvent, SharedString,
-    Style, Subscription, TextLayout, TouchDragEvent, TouchPhase, WeakEntity, Window, point, px,
+    InspectorElementId, IntoElement, LayoutId, MouseButton, MouseDownEvent, MouseMoveEvent,
+    MouseUpEvent, Pixels, Point, ScrollDelta, ScrollWheelEvent, SharedString, Style, Subscription,
+    TextLayout, TouchPhase, WeakEntity, Window, point, px,
 };
 
 use crate::text_boundary::{line_range_at, word_range_at};
@@ -934,31 +934,7 @@ impl TextSelectionHandle {
         for (edge, hitbox) in &layout.hitboxes {
             let edge = *edge;
             state.update(cx, |state, _| state.register_touch_ui(hitbox.bounds));
-            // Touch: the drag is offered on the first touch, before it can
-            // become a tap, a long press or a pan.
-            window.on_mouse_event({
-                let hitbox = hitbox.clone();
-                let state = state.downgrade();
-                move |event: &TouchDragEvent, phase, window, cx| {
-                    if !phase.bubble()
-                        || event.phase != TouchPhase::Started
-                        || window.default_prevented()
-                        || !hitbox.is_hovered(window)
-                    {
-                        return;
-                    }
-                    let Some(state) = state.upgrade() else {
-                        return;
-                    };
-                    window.prevent_default();
-                    cx.stop_propagation();
-                    state.update(cx, |state, cx| {
-                        state.begin_edge_drag(edge, event.position, window, cx)
-                    });
-                    WindowSelectionState::resolve_content_keys(&state, cx);
-                }
-            });
-            // Mouse: the same drag for a pointer.
+            // Mouse: the drag for a pointer.
             window.on_mouse_event({
                 let hitbox = hitbox.clone();
                 let state = state.downgrade();
@@ -2707,89 +2683,8 @@ fn paint_text_selection(state: &Entity<WindowSelectionState>, window: &mut Windo
         }
     });
 
-    // Every touch is offered as a drag first; that is how a tap's mouse
-    // events are later told apart from a mouse's.
-    window.on_mouse_event(move |event: &TouchDragEvent, phase, _, cx| {
-        if phase.capture() && event.phase == TouchPhase::Started {
-            GlobalState::note_touch(cx);
-        }
-    });
-
-    // Touch panning remains scrolling until a long press actually hits text.
-    // Claiming the gesture keeps subsequent moves out of the pan recognizer.
-    let long_press_state = state.downgrade();
-    window.on_mouse_event(move |event: &LongPressEvent, phase, window, cx| {
-        if !phase.bubble() {
-            return;
-        }
-        let Some(state) = long_press_state.upgrade() else {
-            return;
-        };
-        if event.phase == TouchPhase::Started {
-            if window.default_prevented()
-                || state.read(cx).touch.covers(event.start_position)
-                || !state.update(cx, |state, cx| {
-                    state
-                        .endpoint(event.start_position, Some(window), cx)
-                        .inside_text
-                })
-            {
-                return;
-            }
-            GlobalState::init(cx);
-            GlobalState::reset_text_selection_suppression(cx);
-            let handlers = state.update(cx, |state, cx| state.prepare_for_mouse_down(false, cx));
-            dispatch_clear_handlers(handlers, cx);
-            let selected = state.update(cx, |state, cx| {
-                state.select_at(event.start_position, 2, window, cx);
-                state.anchor.is_some()
-            });
-            if !selected {
-                return;
-            }
-            window.capture_long_press(&state);
-        } else if !window.has_long_press_capture(&state) {
-            return;
-        } else {
-            state.update(cx, |state, cx| match event.phase {
-                TouchPhase::Moved => {
-                    state.is_selecting = true;
-                    state.update_in_window(event.position, window, cx);
-                }
-                TouchPhase::Ended | TouchPhase::Cancelled => {
-                    state.end(cx);
-                    // The finger is up; the selection it made gets its
-                    // handles and the edit menu.
-                    state.keep_touch_selection(cx);
-                }
-                _ => {}
-            });
-        }
-        window.prevent_default();
-        cx.stop_propagation();
-        WindowSelectionState::resolve_content_keys(&state, cx);
-    });
-
     // A handle drag in progress follows the finger or the pointer wherever
     // it goes, whether or not the handle it took is laid out this frame.
-    let drag_state = state.downgrade();
-    window.on_mouse_event(move |event: &TouchDragEvent, phase, window, cx| {
-        if !phase.bubble() || event.phase == TouchPhase::Started {
-            return;
-        }
-        let Some(state) = drag_state.upgrade() else {
-            return;
-        };
-        if state.read(cx).touch.drag.is_none() {
-            return;
-        }
-        cx.stop_propagation();
-        state.update(cx, |state, cx| match event.phase {
-            TouchPhase::Moved => state.update_edge_drag(event.position, window, cx),
-            _ => state.end_edge_drag(cx),
-        });
-        WindowSelectionState::resolve_content_keys(&state, cx);
-    });
     let drag_state = state.downgrade();
     window.on_mouse_event(move |event: &MouseMoveEvent, phase, window, cx| {
         if phase.bubble()
