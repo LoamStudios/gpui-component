@@ -1,5 +1,5 @@
 use gpui::AssetSource;
-gpui_kit_assets::icon_assets!(AppAssets, [Search, Check]);
+gpui_component_assets::icon_assets!(AppAssets, [Search, Check]);
 fn main() {
     let path = std::env::args()
         .nth(1)

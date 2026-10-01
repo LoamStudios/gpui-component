@@ -99,7 +99,7 @@ fn main() {
         "///\n",
         "/// This is not a supported public API and may change or be removed\n",
         "/// without notice. Crates other than `gpui-component` must not use it.\n",
-        "/// Use the public `gpui_kit_assets::IconName` API instead.\n",
+        "/// Use the public `gpui_component_assets::IconName` API instead.\n",
     ));
     code.push_str("#[doc(hidden)]\n#[macro_export]\nmacro_rules! __component_icon_names {\n    ($callback:ident) => { $callback! {\n");
     for (variant, path) in &defaults {

@@ -9,7 +9,13 @@ fn main() {
     // Keep the bytes observable so release size measurements include the SVG payload.
     println!(
         "{}",
-        std::hint::black_box(gpui_kit_assets::AllAssets.load(&path).unwrap().unwrap()).len()
+        std::hint::black_box(
+            gpui_component_assets::AllAssets
+                .load(&path)
+                .unwrap()
+                .unwrap()
+        )
+        .len()
     );
 }
 

@@ -1,7 +1,7 @@
 #![cfg(not(target_family = "wasm"))]
 
 use gpui::{AssetSource, IntoElement};
-use gpui_kit_assets::{AllAssets, Assets, IconName};
+use gpui_component_assets::{AllAssets, Assets, IconName};
 use std::collections::BTreeSet;
 
 #[test]
@@ -27,7 +27,7 @@ fn shared_names_work_without_component() {
     let _: gpui::AnyElement = IconName::Search.into();
 }
 
-gpui_kit_assets::icon_assets!(SelectedAssets, [Search, Check]);
+gpui_component_assets::icon_assets!(SelectedAssets, [Search, Check]);
 
 #[test]
 fn selected_assets_only_expose_requested_icons() {
@@ -46,7 +46,7 @@ fn selected_assets_only_expose_requested_icons() {
     assert!(assets.load("icons/accessibility.svg").unwrap().is_none());
 }
 
-gpui_kit_assets::icon_assets!(pub EmptyAssets, []);
+gpui_component_assets::icon_assets!(pub EmptyAssets, []);
 
 #[test]
 fn empty_selection_is_a_valid_asset_source() {

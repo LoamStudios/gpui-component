@@ -2,7 +2,7 @@
 #[cfg(not(target_family = "wasm"))]
 use gpui::AssetSource;
 #[cfg(not(target_family = "wasm"))]
-gpui_kit_assets::icon_assets!(
+gpui_component_assets::icon_assets!(
     ExtraIcons,
     [
         Accessibility,
@@ -25,10 +25,10 @@ impl AssetSource for AppAssets {
         if let Some(bytes) = ExtraIcons.load(path)? {
             return Ok(Some(bytes));
         }
-        gpui_kit_assets::Assets.load(path)
+        gpui_component_assets::Assets.load(path)
     }
     fn list(&self, path: &str) -> gpui::Result<Vec<gpui::SharedString>> {
-        let mut paths = gpui_kit_assets::Assets.list(path)?;
+        let mut paths = gpui_component_assets::Assets.list(path)?;
         paths.extend(ExtraIcons.list(path)?);
         paths.sort();
         paths.dedup();
@@ -38,9 +38,11 @@ impl AssetSource for AppAssets {
 
 #[cfg(not(target_family = "wasm"))]
 fn main() {
-    let path = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| gpui_kit_assets::IconName::Accessibility.path().to_string());
+    let path = std::env::args().nth(1).unwrap_or_else(|| {
+        gpui_component_assets::IconName::Accessibility
+            .path()
+            .to_string()
+    });
     let source: &dyn AssetSource = std::hint::black_box(&AppAssets);
     let bytes = std::hint::black_box(source.load(&path).unwrap());
     println!("{:?}", bytes.map(|bytes| bytes.len()));

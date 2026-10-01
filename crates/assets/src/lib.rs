@@ -14,7 +14,7 @@ pub use icon::{IconName, IconNamed};
 /// ## Usage
 ///
 /// ```rust,no_run
-/// use gpui_kit_assets::Assets;
+/// use gpui_component_assets::Assets;
 ///
 /// let app = gpui_platform::application().with_assets(Assets);
 /// ```
