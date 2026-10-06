@@ -40,9 +40,9 @@ impl LastLayout {
 
     pub(super) fn alignment_offset(&self, line_width: Pixels) -> Pixels {
         match self.text_align {
-            TextAlign::Left => px(0.),
+            TextAlign::Left | TextAlign::Start => px(0.),
             TextAlign::Center => (self.content_width - line_width).half().max(px(0.)),
-            TextAlign::Right => (self.content_width - line_width).max(px(0.)),
+            TextAlign::Right | TextAlign::End => (self.content_width - line_width).max(px(0.)),
         }
     }
 }

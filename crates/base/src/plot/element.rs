@@ -2,6 +2,7 @@
 //! the overlay the plot returns from [`Plot::tooltip`].
 use std::{cell::Cell, rc::Rc};
 
+use gpui::AppContext as _;
 use gpui::{
     AnyElement, App, Bounds, Element, ElementId, GlobalElementId, Hitbox, HitboxBehavior,
     InspectorElementId, IntoElement, LayoutId, MouseMoveEvent, Pixels, Point, Size, Style, Window,

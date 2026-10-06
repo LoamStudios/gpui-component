@@ -2613,7 +2613,7 @@ fn measure_table_columns(
                     let runs = text_runs(range.len(), &text_style, &highlights);
                     line_w += window
                         .text_system()
-                        .layout_line(&line[range], font_size * scale, &runs, None)
+                        .layout_line(&line[range], font_size * scale, &runs)
                         .width;
                 }
                 w = w.max(f32::from(line_w));

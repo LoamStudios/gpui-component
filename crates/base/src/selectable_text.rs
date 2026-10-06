@@ -85,14 +85,14 @@ impl SelectableText {
             return;
         };
         for bounds in selection_quad_bounds(start, end, layout.bounds(), layout.line_height()) {
-            window.paint_quad(PaintQuad {
+            window.paint_quad(gpui::quad(
                 bounds,
-                background: color.into(),
-                corner_radii: Corners::default(),
-                border_widths: Edges::default(),
-                border_color: transparent_black(),
-                border_style: BorderStyle::default(),
-            });
+                Corners::default(),
+                color,
+                Edges::default(),
+                transparent_black(),
+                BorderStyle::default(),
+            ));
         }
     }
 }

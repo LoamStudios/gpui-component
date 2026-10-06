@@ -4,6 +4,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use gpui::AppContext as _;
 use gpui::{
     AnyElement, App, AvailableSpace, Bounds, CursorStyle, Element, ElementId, GlobalElementId,
     Hitbox, HitboxBehavior, InspectorElementId, IntoElement, LayoutId, MouseButton, MouseDownEvent,
@@ -59,12 +60,10 @@ impl MeasuredInlineObject {
     ) -> Self {
         let font_size = style.font_size.to_pixels(window.rem_size());
         let text: SharedString = text.replace(['\r', '\n'], " ").into();
-        let line = window.text_system().shape_line(
-            text.clone(),
-            font_size,
-            &[style.to_run(text.len())],
-            None,
-        );
+        let line =
+            window
+                .text_system()
+                .shape_line(text.clone(), font_size, &[style.to_run(text.len())]);
         let height = style
             .line_height_in_pixels(window.rem_size())
             .max(line.ascent + line.descent);

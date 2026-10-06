@@ -8,7 +8,7 @@ use std::{cell::Cell, rc::Rc, time::Duration};
 
 use crate::{ActiveTheme as _, ThemeStyled as _};
 use crate::{
-    Selectable, StyledExt as _,
+    Selectable,
     animation::ease_out_cubic,
     styled::{popover_ring, popover_shadow},
     v_flex,

@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use gpui::AppContext as _;
 use gpui::{
     App, Axis, BorderStyle, Bounds, ContentMask, Edges, Element, ElementId, GlobalElementId,
     Hitbox, Hsla, InteractiveElement as _, IntoElement, IsZero as _, LayoutId, OngoingScroll,
@@ -197,102 +198,108 @@ impl<H: ScrollbarHandle + Clone> Element for ScrollableMask<H> {
             })
             .unwrap_or_default();
 
-        window.with_content_mask(Some(ContentMask { bounds }), |window| {
-            if let Some(color) = self.debug {
-                window.paint_quad(PaintQuad {
-                    bounds,
-                    border_widths: Edges::all(px(1.0)),
-                    border_color: color.into(),
-                    background: gpui::transparent_white().into(),
-                    corner_radii: Corners::all(px(0.)),
-                    border_style: BorderStyle::default(),
-                });
-            }
+        window.with_content_mask(
+            Some(ContentMask {
+                bounds,
+                ..Default::default()
+            }),
+            |window| {
+                if let Some(color) = self.debug {
+                    window.paint_quad(gpui::quad(
+                        bounds,
+                        Corners::all(px(0.)),
+                        gpui::transparent_white(),
+                        Edges::all(px(1.0)),
+                        color,
+                        BorderStyle::default(),
+                    ));
+                }
 
-            window.on_mouse_event({
-                let view_id = window.current_view();
-                let scroll_handle = self.scroll_handle.clone();
-                let hitbox_id = hitbox.id;
-                let ongoing_scroll = ongoing_scroll.clone();
+                window.on_mouse_event({
+                    let view_id = window.current_view();
+                    let scroll_handle = self.scroll_handle.clone();
+                    let hitbox_id = hitbox.id;
+                    let ongoing_scroll = ongoing_scroll.clone();
 
-                move |event: &ScrollWheelEvent, phase, window, cx| {
-                    // Handle in the capture phase: ancestor scrollers such as
-                    // `gpui::list` register their wheel listeners after their
-                    // children paint, so in the bubble phase (reverse
-                    // registration order) they run first and would consume the
-                    // vertical component of a trackpad swipe before this mask
-                    // could stop the propagation.
-                    //
-                    // `should_handle_scroll` (instead of a raw bounds check)
-                    // keeps the mask inert when it is occluded, e.g. below an
-                    // open dialog or context menu.
-                    if !(phase.capture() && hitbox_id.should_handle_scroll(window)) {
-                        return;
-                    }
-
-                    let mut offset = scroll_handle.offset();
-                    let mut delta = event.delta.pixel_delta(line_height);
-
-                    // Lock the gesture to the axis it started on, so a diagonal
-                    // trackpad swipe cannot flip which mask consumes it from one
-                    // event to the next. Line deltas carry no touch phase.
-                    if event.delta.precise() {
-                        ongoing_scroll
-                            .borrow_mut()
-                            .lock_axis(&mut delta, event.touch_phase);
-                    }
-
-                    // Limit for only one way scrolling at same time.
-                    // When use MacBook touchpad we may get both x and y delta,
-                    // only allows the one that more to scroll.
-                    if !delta.x.is_zero() && !delta.y.is_zero() {
-                        if delta.x.abs() > delta.y.abs() {
-                            delta.y = px(0.);
-                        } else {
-                            delta.x = px(0.);
-                        }
-                    }
-
-                    if !is_horizontal {
-                        // The current offset must be clamped too: after a
-                        // bubbled event, the scrolled element's own listener
-                        // pushes the shared offset beyond the edge unclamped
-                        // (the div only clamps on prepaint), and that
-                        // transient overscroll would read as "room to scroll".
-                        // `ScrollbarHandle` has no `max_offset`; recover it from
-                        // the definition `content_size = viewport + max_offset`.
-                        let axis_max = (scroll_handle.content_size().height
-                            - scroll_handle.viewport_bounds().size.height)
-                            .max(px(0.));
-                        let current = offset.y.clamp(-axis_max, px(0.));
-                        let new_offset = (current + delta.y).clamp(-axis_max, px(0.));
-                        if new_offset == current {
-                            // At the edge or no overflow: bubble to the parent.
+                    move |event: &ScrollWheelEvent, phase, window, cx| {
+                        // Handle in the capture phase: ancestor scrollers such as
+                        // `gpui::list` register their wheel listeners after their
+                        // children paint, so in the bubble phase (reverse
+                        // registration order) they run first and would consume the
+                        // vertical component of a trackpad swipe before this mask
+                        // could stop the propagation.
+                        //
+                        // `should_handle_scroll` (instead of a raw bounds check)
+                        // keeps the mask inert when it is occluded, e.g. below an
+                        // open dialog or context menu.
+                        if !(phase.capture() && hitbox_id.should_handle_scroll(window)) {
                             return;
                         }
 
-                        offset.y = new_offset;
-                        scroll_handle.set_offset(offset);
-                        cx.notify(view_id);
-                        cx.stop_propagation();
-                        return;
-                    }
+                        let mut offset = scroll_handle.offset();
+                        let mut delta = event.delta.pixel_delta(line_height);
 
-                    offset.x += delta.x;
+                        // Lock the gesture to the axis it started on, so a diagonal
+                        // trackpad swipe cannot flip which mask consumes it from one
+                        // event to the next. Line deltas carry no touch phase.
+                        if event.delta.precise() {
+                            ongoing_scroll
+                                .borrow_mut()
+                                .lock_axis(&mut delta, event.touch_phase);
+                        }
 
-                    // NOTE: `set_offset` does not clamp (clamping happens in
-                    // the div's prepaint), so any non-zero horizontal-dominant
-                    // delta passes this guard — even at the scroll edge the
-                    // event is consumed rather than turned into a parent
-                    // scroll.
-                    if offset != scroll_handle.offset() {
-                        scroll_handle.set_offset(offset);
-                        cx.notify(view_id);
-                        cx.stop_propagation();
+                        // Limit for only one way scrolling at same time.
+                        // When use MacBook touchpad we may get both x and y delta,
+                        // only allows the one that more to scroll.
+                        if !delta.x.is_zero() && !delta.y.is_zero() {
+                            if delta.x.abs() > delta.y.abs() {
+                                delta.y = px(0.);
+                            } else {
+                                delta.x = px(0.);
+                            }
+                        }
+
+                        if !is_horizontal {
+                            // The current offset must be clamped too: after a
+                            // bubbled event, the scrolled element's own listener
+                            // pushes the shared offset beyond the edge unclamped
+                            // (the div only clamps on prepaint), and that
+                            // transient overscroll would read as "room to scroll".
+                            // `ScrollbarHandle` has no `max_offset`; recover it from
+                            // the definition `content_size = viewport + max_offset`.
+                            let axis_max = (scroll_handle.content_size().height
+                                - scroll_handle.viewport_bounds().size.height)
+                                .max(px(0.));
+                            let current = offset.y.clamp(-axis_max, px(0.));
+                            let new_offset = (current + delta.y).clamp(-axis_max, px(0.));
+                            if new_offset == current {
+                                // At the edge or no overflow: bubble to the parent.
+                                return;
+                            }
+
+                            offset.y = new_offset;
+                            scroll_handle.set_offset(offset);
+                            cx.notify(view_id);
+                            cx.stop_propagation();
+                            return;
+                        }
+
+                        offset.x += delta.x;
+
+                        // NOTE: `set_offset` does not clamp (clamping happens in
+                        // the div's prepaint), so any non-zero horizontal-dominant
+                        // delta passes this guard — even at the scroll edge the
+                        // event is consumed rather than turned into a parent
+                        // scroll.
+                        if offset != scroll_handle.offset() {
+                            scroll_handle.set_offset(offset);
+                            cx.notify(view_id);
+                            cx.stop_propagation();
+                        }
                     }
-                }
-            });
-        });
+                });
+            },
+        );
     }
 }
 

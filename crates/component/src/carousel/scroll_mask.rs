@@ -120,140 +120,147 @@ impl Element for CarouselScrollMask {
             })
             .unwrap_or_default();
 
-        window.with_content_mask(Some(ContentMask { bounds }), |window| {
-            let pointer_state = state.clone();
-            window.on_mouse_event(move |event: &MouseDownEvent, phase, window, cx| {
-                if phase.capture()
-                    && event.button == MouseButton::Left
-                    && hitbox_id.should_handle_scroll(window)
-                {
-                    let started =
-                        pointer_state.update(cx, |state, cx| state.begin_drag(event.position, cx));
-                    if started {
-                        GlobalState::suppress_text_selection(cx);
+        window.with_content_mask(
+            Some(ContentMask {
+                bounds,
+                ..Default::default()
+            }),
+            |window| {
+                let pointer_state = state.clone();
+                window.on_mouse_event(move |event: &MouseDownEvent, phase, window, cx| {
+                    if phase.capture()
+                        && event.button == MouseButton::Left
+                        && hitbox_id.should_handle_scroll(window)
+                    {
+                        let started = pointer_state
+                            .update(cx, |state, cx| state.begin_drag(event.position, cx));
+                        if started {
+                            GlobalState::suppress_text_selection(cx);
+                        }
                     }
-                }
-            });
+                });
 
-            let pointer_state = state.clone();
-            window.on_mouse_event(move |event: &MouseMoveEvent, phase, _, cx| {
-                if !phase.capture() || event.pressed_button != Some(MouseButton::Left) {
-                    return;
-                }
-
-                let handled =
-                    pointer_state.update(cx, |state, cx| state.update_drag(event.position, cx));
-                if handled {
-                    cx.stop_propagation();
-                }
-            });
-
-            let pointer_state = state.clone();
-            let mut suppress_release = false;
-            window.on_mouse_event(move |event: &MouseUpEvent, phase, window, cx| {
-                if event.button != MouseButton::Left {
-                    return;
-                }
-
-                if phase.capture() {
-                    let snapshot = pointer_state.read(cx);
-                    let handled = snapshot.is_pointer_drag_locked();
-                    suppress_release = handled || snapshot.should_suppress_pointer_click();
-                    pointer_state.update(cx, |state, cx| {
-                        state.finish_drag(cx);
-                    });
-                    if suppress_release {
-                        // The release may be stopped before TextSelectionLayer's
-                        // bubble listener. Clear its observable selection state
-                        // here so a Carousel drag cannot leave a stale drag or
-                        // participant-local selection behind.
-                        gpui_base::TextSelection::clear(window, cx);
+                let pointer_state = state.clone();
+                window.on_mouse_event(move |event: &MouseMoveEvent, phase, _, cx| {
+                    if !phase.capture() || event.pressed_button != Some(MouseButton::Left) {
+                        return;
                     }
-                } else if suppress_release {
-                    // All capture handlers have now cleared their pressed
-                    // state. Stop before descendant click handlers run.
-                    suppress_release = false;
-                    cx.stop_propagation();
-                }
-            });
 
-            window.on_mouse_event(move |event: &ScrollWheelEvent, phase, window, cx| {
-                if !phase.capture() || !hitbox_id.should_handle_scroll(window) {
-                    return;
-                }
+                    let handled =
+                        pointer_state.update(cx, |state, cx| state.update_drag(event.position, cx));
+                    if handled {
+                        cx.stop_propagation();
+                    }
+                });
 
-                let mut delta = event.delta.pixel_delta(window.line_height());
-                if event.delta.precise() {
-                    ongoing_scroll
-                        .borrow_mut()
-                        .lock_axis(&mut delta, event.touch_phase);
-                }
+                let pointer_state = state.clone();
+                let mut suppress_release = false;
+                window.on_mouse_event(move |event: &MouseUpEvent, phase, window, cx| {
+                    if event.button != MouseButton::Left {
+                        return;
+                    }
 
-                if !delta.x.is_zero() && !delta.y.is_zero() {
-                    if delta.x.abs() > delta.y.abs() {
+                    if phase.capture() {
+                        let snapshot = pointer_state.read(cx);
+                        let handled = snapshot.is_pointer_drag_locked();
+                        suppress_release = handled || snapshot.should_suppress_pointer_click();
+                        pointer_state.update(cx, |state, cx| {
+                            state.finish_drag(cx);
+                        });
+                        if suppress_release {
+                            // The release may be stopped before TextSelectionLayer's
+                            // bubble listener. Clear its observable selection state
+                            // here so a Carousel drag cannot leave a stale drag or
+                            // participant-local selection behind.
+                            gpui_base::TextSelection::clear(window, cx);
+                        }
+                    } else if suppress_release {
+                        // All capture handlers have now cleared their pressed
+                        // state. Stop before descendant click handlers run.
+                        suppress_release = false;
+                        cx.stop_propagation();
+                    }
+                });
+
+                window.on_mouse_event(move |event: &ScrollWheelEvent, phase, window, cx| {
+                    if !phase.capture() || !hitbox_id.should_handle_scroll(window) {
+                        return;
+                    }
+
+                    let mut delta = event.delta.pixel_delta(window.line_height());
+                    if event.delta.precise() {
+                        ongoing_scroll
+                            .borrow_mut()
+                            .lock_axis(&mut delta, event.touch_phase);
+                    }
+
+                    if !delta.x.is_zero() && !delta.y.is_zero() {
+                        if delta.x.abs() > delta.y.abs() {
+                            delta.y = gpui::Pixels::ZERO;
+                        } else {
+                            delta.x = gpui::Pixels::ZERO;
+                        }
+                    }
+
+                    // Ignore the secondary axis. The lock above keeps this stable
+                    // throughout a precise trackpad gesture.
+                    if axis.is_horizontal() {
                         delta.y = gpui::Pixels::ZERO;
                     } else {
                         delta.x = gpui::Pixels::ZERO;
                     }
-                }
 
-                // Ignore the secondary axis. The lock above keeps this stable
-                // throughout a precise trackpad gesture.
-                if axis.is_horizontal() {
-                    delta.y = gpui::Pixels::ZERO;
-                } else {
-                    delta.x = gpui::Pixels::ZERO;
-                }
-
-                let precise = event.delta.precise();
-                let primary_delta = if axis.is_horizontal() {
-                    delta.x
-                } else {
-                    delta.y
-                };
-                let consumed = if primary_delta.is_zero() {
-                    false
-                } else if !precise {
-                    state.update(cx, |state, cx| {
-                        state.handle_wheel_step(axis, primary_delta, cx)
-                    })
-                } else if matches!(event.touch_phase, TouchPhase::Ended | TouchPhase::Cancelled) {
-                    false
-                } else {
-                    // A gesture this carousel already owns stays here even at
-                    // an edge, so its leftover never scrolls an ancestor. One
-                    // that begins at an edge belongs to the ancestor until it
-                    // ends.
-                    let owned = state.read(cx).has_scroll_gesture();
-                    let moved = state.update(cx, |state, cx| {
-                        state.handle_scroll_delta(axis, primary_delta, event.touch_phase, cx)
-                    });
-                    if !moved && !owned {
-                        state.update(cx, |state, cx| state.defer_scroll_to_ancestor(cx));
-                    }
-                    moved || owned
-                };
-
-                if precise {
-                    match event.touch_phase {
-                        TouchPhase::Ended => {
-                            state.update(cx, |state, cx| state.finish_scroll(false, cx));
+                    let precise = event.delta.precise();
+                    let primary_delta = if axis.is_horizontal() {
+                        delta.x
+                    } else {
+                        delta.y
+                    };
+                    let consumed = if primary_delta.is_zero() {
+                        false
+                    } else if !precise {
+                        state.update(cx, |state, cx| {
+                            state.handle_wheel_step(axis, primary_delta, cx)
+                        })
+                    } else if matches!(event.touch_phase, TouchPhase::Ended | TouchPhase::Cancelled)
+                    {
+                        false
+                    } else {
+                        // A gesture this carousel already owns stays here even at
+                        // an edge, so its leftover never scrolls an ancestor. One
+                        // that begins at an edge belongs to the ancestor until it
+                        // ends.
+                        let owned = state.read(cx).has_scroll_gesture();
+                        let moved = state.update(cx, |state, cx| {
+                            state.handle_scroll_delta(axis, primary_delta, event.touch_phase, cx)
+                        });
+                        if !moved && !owned {
+                            state.update(cx, |state, cx| state.defer_scroll_to_ancestor(cx));
                         }
-                        TouchPhase::Cancelled => {
-                            state.update(cx, |state, cx| state.finish_scroll(true, cx));
-                        }
-                        TouchPhase::Started | TouchPhase::Moved => {}
-                    }
-                }
+                        moved || owned
+                    };
 
-                // Horizontal carousels retain every gesture at their edge. A
-                // vertical carousel hands a gesture that begins at an edge to
-                // an ancestor so the surrounding document keeps scrolling.
-                if consumed || (axis.is_horizontal() && !primary_delta.is_zero()) {
-                    cx.stop_propagation();
-                }
-            });
-        });
+                    if precise {
+                        match event.touch_phase {
+                            TouchPhase::Ended => {
+                                state.update(cx, |state, cx| state.finish_scroll(false, cx));
+                            }
+                            TouchPhase::Cancelled => {
+                                state.update(cx, |state, cx| state.finish_scroll(true, cx));
+                            }
+                            TouchPhase::Started | TouchPhase::Moved => {}
+                        }
+                    }
+
+                    // Horizontal carousels retain every gesture at their edge. A
+                    // vertical carousel hands a gesture that begins at an edge to
+                    // an ancestor so the surrounding document keeps scrolling.
+                    if consumed || (axis.is_horizontal() && !primary_delta.is_zero()) {
+                        cx.stop_propagation();
+                    }
+                });
+            },
+        );
     }
 }
 

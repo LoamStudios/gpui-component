@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::{
-    Disableable, Sizable, StyledExt,
+    Disableable, Sizable,
     checkbox::Checkbox,
     setting::{
         AnySettingField, RenderOptions,
@@ -9,7 +9,9 @@ use crate::{
     },
     switch::Switch,
 };
-use gpui::{AnyElement, App, IntoElement, ParentElement as _, StyleRefinement, Window, div};
+use gpui::{
+    AnyElement, App, IntoElement, ParentElement as _, StyleRefinement, Styled as _, Window, div,
+};
 
 pub(crate) struct BoolField {
     use_switch: bool,

@@ -1,4 +1,5 @@
 use crate::input::{InputExtras as _, InputModeKind};
+use gpui::AppContext as _;
 use gpui::Corners;
 use gpui::Half;
 use gpui::{
@@ -566,8 +567,8 @@ impl<M: InputModeKind> TextElement<M> {
                     // For Right alignment use 0 margin: cursor is clamped to bounds separately,
                     // so we never scroll the text for cursor-at-edge, avoiding a first-click jump.
                     let safety_margin = match last_layout.text_align {
-                        TextAlign::Left => RIGHT_MARGIN,
-                        TextAlign::Right => px(0.),
+                        TextAlign::Left | TextAlign::Start => RIGHT_MARGIN,
+                        TextAlign::Right | TextAlign::End => px(0.),
                         TextAlign::Center => CURSOR_WIDTH,
                     };
 
@@ -1058,7 +1059,6 @@ impl<M: InputModeKind> TextElement<M> {
                     strikethrough: None,
                     letter_spacing: None,
                 }],
-                None,
             );
 
             empty_line_number.width + LINE_NUMBER_RIGHT_MARGIN
@@ -1111,7 +1111,6 @@ impl<M: InputModeKind> TextElement<M> {
                 strikethrough: None,
                 letter_spacing: None,
             }],
-            None,
         );
 
         let tab_text = SharedString::new_static("→");
@@ -1127,7 +1126,6 @@ impl<M: InputModeKind> TextElement<M> {
                 strikethrough: None,
                 letter_spacing: None,
             }],
-            None,
         );
 
         Some(WhitespaceIndicators { space, tab })
@@ -1188,7 +1186,7 @@ impl<M: InputModeKind> TextElement<M> {
             Some(
                 window
                     .text_system()
-                    .shape_line(first_text, font_size, &[first_run], None),
+                    .shape_line(first_text, font_size, &[first_run]),
             )
         } else {
             None
@@ -1213,7 +1211,7 @@ impl<M: InputModeKind> TextElement<M> {
                 let shaped_text = if text.is_empty() { " ".into() } else { text };
                 window
                     .text_system()
-                    .shape_line(shaped_text, font_size, &[run], None)
+                    .shape_line(shaped_text, font_size, &[run])
             })
             .collect();
 
@@ -1664,7 +1662,6 @@ impl<M: InputModeKind> TextElement<M> {
                                         part.to_owned().into(),
                                         style.font_size.to_pixels(window.rem_size()),
                                         &[style.to_run(part.len())],
-                                        None,
                                     )
                                     .width;
                                 width +=
@@ -1679,7 +1676,6 @@ impl<M: InputModeKind> TextElement<M> {
                                         part.to_owned().into(),
                                         style.font_size.to_pixels(window.rem_size()),
                                         &[style.to_run(part.len())],
-                                        None,
                                     )
                                     .width
                         })
@@ -1749,7 +1745,6 @@ impl<M: InputModeKind> TextElement<M> {
                                 text[part.clone()].to_owned().into(),
                                 font_size,
                                 &runs_for_range(runs, run_offset, &part),
-                                None,
                             );
                             let width = shaped.width;
                             fragments.push(InlineFragment {
@@ -1776,7 +1771,6 @@ impl<M: InputModeKind> TextElement<M> {
                             text[part.clone()].to_owned().into(),
                             font_size,
                             &runs_for_range(runs, run_offset, &part),
-                            None,
                         );
                         let width = shaped.width;
                         fragments.push(InlineFragment {
@@ -1883,9 +1877,7 @@ impl<M: InputModeKind> TextElement<M> {
             let text: SharedString = display_text.to_string().into();
             let aligned_runs = align_runs_to_char_boundaries(&text, runs);
             let line_runs = aligned_runs.as_deref().unwrap_or(runs);
-            let shaped_line = window
-                .text_system()
-                .shape_line(text, font_size, line_runs, None);
+            let shaped_line = window.text_system().shape_line(text, font_size, line_runs);
 
             let line_layout = LineLayout::new()
                 .lines(smallvec::smallvec![shaped_line])
@@ -1901,12 +1893,10 @@ impl<M: InputModeKind> TextElement<M> {
             let mut line_has_background = false;
 
             for (line, line_runs) in placeholder_line_runs(&placeholder_text, runs) {
-                let shaped_line = window.text_system().shape_line(
-                    line.to_string().into(),
-                    font_size,
-                    &line_runs,
-                    None,
-                );
+                let shaped_line =
+                    window
+                        .text_system()
+                        .shape_line(line.to_string().into(), font_size, &line_runs);
                 line_has_background |= has_background(&line_runs);
                 placeholder_lines.push(shaped_line);
             }
@@ -1954,7 +1944,7 @@ impl<M: InputModeKind> TextElement<M> {
                     align_runs_to_char_boundaries(&sub_line, &line_runs).unwrap_or(line_runs);
                 let shaped_line = window
                     .text_system()
-                    .shape_line(sub_line, font_size, &line_runs, None);
+                    .shape_line(sub_line, font_size, &line_runs);
 
                 line_has_background |= has_background(&line_runs);
                 wrapped_lines.push(shaped_line);
@@ -2394,7 +2384,10 @@ impl<M: InputModeKind> Element for TextElement<M> {
         // out there is measured in spaces instead.
         let space_width = {
             let font_id = window.text_system().resolve_font(&font);
-            window.text_system().layout_width(font_id, text_size, ' ')
+            window
+                .text_system()
+                .advance(font_id, text_size, ' ')
+                .map_or(text_size / 2., |advance| advance.width)
         };
 
         self.state.update(cx, |state, cx| {
@@ -2633,7 +2626,6 @@ impl<M: InputModeKind> Element for TextElement<M> {
                                 strikethrough: None,
                                 letter_spacing: None,
                             }],
-                            wrap_width,
                         )
                         .width
                 }
@@ -2792,11 +2784,7 @@ impl<M: InputModeKind> Element for TextElement<M> {
                 };
 
                 let mut sub_lines: SmallVec<[ShapedLine; 1]> = SmallVec::new();
-                sub_lines.push(
-                    window
-                        .text_system()
-                        .shape_line(line_no, text_size, &runs, None),
-                );
+                sub_lines.push(window.text_system().shape_line(line_no, text_size, &runs));
                 for _ in 0..line.wrapped_lines.len().saturating_sub(1) {
                     sub_lines.push(ShapedLine::default());
                 }

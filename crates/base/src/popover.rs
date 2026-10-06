@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use gpui::AppContext as _;
 use gpui::{
     Anchor, AnyElement, App, Context, DismissEvent, ElementId, EventEmitter, FocusHandle,
     Focusable, InteractiveElement as _, IntoElement, KeyBinding, MouseButton, ParentElement as _,

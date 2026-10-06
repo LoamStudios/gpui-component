@@ -7,6 +7,7 @@ use crate::{
     animation::{ease_in_cubic, ease_out_cubic},
     theme::ActiveTheme as _,
 };
+use gpui::AppContext as _;
 use gpui::{
     Anchor, App, Axis, Background, BorderStyle, Bounds, ColorExt as _, ContentMask, CursorStyle,
     Edges, Element, ElementId, EntityId, GlobalElementId, Hitbox, HitboxBehavior, Hsla,
@@ -1289,9 +1290,13 @@ impl Element for Scrollbar {
         cx: &mut App,
     ) -> Self::PrepaintState {
         let bounds = self.resolved_viewport_bounds(bounds);
-        let hitbox = window.with_content_mask(Some(ContentMask { bounds }), |window| {
-            window.insert_hitbox(bounds, HitboxBehavior::Normal)
-        });
+        let hitbox = window.with_content_mask(
+            Some(ContentMask {
+                bounds,
+                ..Default::default()
+            }),
+            |window| window.insert_hitbox(bounds, HitboxBehavior::Normal),
+        );
 
         let state = window
             .use_state(cx, |_, _| ScrollbarState::default())
@@ -1532,9 +1537,13 @@ impl Element for Scrollbar {
                 )
             };
 
-            let bar_hitbox = window.with_content_mask(Some(ContentMask { bounds }), |window| {
-                window.insert_hitbox(bounds, gpui::HitboxBehavior::Normal)
-            });
+            let bar_hitbox = window.with_content_mask(
+                Some(ContentMask {
+                    bounds,
+                    ..Default::default()
+                }),
+                |window| window.insert_hitbox(bounds, gpui::HitboxBehavior::Normal),
+            );
 
             states.push(AxisPrepaintState {
                 axis,
@@ -1582,6 +1591,7 @@ impl Element for Scrollbar {
         window.with_content_mask(
             Some(ContentMask {
                 bounds: hitbox_bounds,
+                ..Default::default()
             }),
             |window| {
                 for state in prepaint.states.iter() {
@@ -1611,11 +1621,11 @@ impl Element for Scrollbar {
                     window.paint_layer(hitbox_bounds, |cx| {
                         cx.paint_quad(fill(painted_bounds, painted_track_bg));
 
-                        cx.paint_quad(PaintQuad {
-                            bounds: painted_bounds,
-                            corner_radii: (0.).into(),
-                            background: gpui::transparent_black().into(),
-                            border_widths: if is_vertical {
+                        cx.paint_quad(gpui::quad(
+                            painted_bounds,
+                            (0.),
+                            gpui::transparent_black(),
+                            if is_vertical {
                                 Edges {
                                     top: px(0.),
                                     right: px(0.),
@@ -1630,9 +1640,9 @@ impl Element for Scrollbar {
                                     left: px(0.),
                                 }
                             },
-                            border_color: painted_border.into(),
-                            border_style: BorderStyle::default(),
-                        });
+                            painted_border,
+                            BorderStyle::default(),
+                        ));
 
                         cx.paint_quad(
                             fill(painted_thumb_bounds, painted_thumb_bg).corner_radii(radius),

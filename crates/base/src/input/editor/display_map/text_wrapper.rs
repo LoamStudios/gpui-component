@@ -4,9 +4,7 @@ use std::borrow::Cow;
 use std::ops::Range;
 use std::rc::Rc;
 
-use gpui::{
-    App, Font, LineFragment, Pixels, Point, ShapedLine, Size, TextAlign, Window, point, px, size,
-};
+use gpui::{App, Font, Pixels, Point, ShapedLine, Size, TextAlign, Window, point, px, size};
 use ropey::Rope;
 use smallvec::SmallVec;
 use sum_tree::{Bias, Dimensions, SumTree};
@@ -15,6 +13,7 @@ use crate::input::{
     Point as TreeSitterPoint, RopeExt,
     layout::{LastLayout, WhitespaceIndicators},
 };
+use crate::text::line_wrapper::{Boundary, LineFragment, LineWrapper};
 
 /// Controls how soft-wrapped continuation lines are indented.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -293,9 +292,8 @@ impl TextWrapper {
         new_text: &Rope,
         cx: &mut App,
     ) {
-        let mut line_wrapper = cx
-            .text_system()
-            .line_wrapper(self.font.clone(), self.font_size);
+        let mut line_wrapper =
+            LineWrapper::new(self.font.clone(), self.font_size, cx.text_system().clone());
         let metrics = self.inline_metrics.clone();
         self._update(
             changed_text,
@@ -421,7 +419,7 @@ impl TextWrapper {
         new_text: &Rope,
         wrap_line: &mut F,
     ) where
-        F: FnMut(&str, Pixels, usize) -> Vec<gpui::Boundary>,
+        F: FnMut(&str, Pixels, usize) -> Vec<Boundary>,
     {
         // Remove the old changed lines.
         let buffer_line_count = self.lines_count();
@@ -991,7 +989,7 @@ mod tests {
     use super::*;
     use std::rc::Rc;
 
-    use gpui::{Boundary, FontFeatures, FontStyle, FontWeight, px};
+    use gpui::{FontFeatures, FontStyle, FontWeight, px};
 
     #[test]
     fn test_update() {
@@ -1000,6 +998,7 @@ mod tests {
             weight: FontWeight::default(),
             style: FontStyle::Normal,
             features: FontFeatures::default(),
+            width: Default::default(),
             fallbacks: None,
         };
 
@@ -1196,6 +1195,7 @@ mod tests {
             weight: FontWeight::default(),
             style: FontStyle::Normal,
             features: FontFeatures::default(),
+            width: Default::default(),
             fallbacks: None,
         }
     }
@@ -1468,6 +1468,7 @@ mod tests {
             weight: FontWeight::default(),
             style: FontStyle::Normal,
             features: FontFeatures::default(),
+            width: Default::default(),
             fallbacks: None,
         };
 

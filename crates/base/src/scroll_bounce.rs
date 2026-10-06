@@ -1,6 +1,7 @@
 //! Boundary displacement only: the list keeps its clamped logical position.
 
 use crate::{OngoingScrollExt as _, ScrollbarHandle};
+use gpui::AppContext as _;
 use gpui::{
     AnyElement, App, Bounds, ContentMask, DispatchPhase, Element, ElementId, GlobalElementId,
     Hitbox, HitboxBehavior, InspectorElementId, IntoElement, LayoutId, OngoingScroll, Pixels,
@@ -247,11 +248,17 @@ impl Element for ScrollBounce {
             state.physics.offset()
         };
         let hitbox = window.insert_hitbox(bounds, HitboxBehavior::Normal);
-        window.with_content_mask(Some(ContentMask { bounds }), |window| {
-            window.with_element_offset(point(px(0.), px(offset)), |window| {
-                self.child.prepaint(window, cx);
-            });
-        });
+        window.with_content_mask(
+            Some(ContentMask {
+                bounds,
+                ..Default::default()
+            }),
+            |window| {
+                window.with_element_offset(point(px(0.), px(offset)), |window| {
+                    self.child.prepaint(window, cx);
+                });
+            },
+        );
         ScrollBouncePrepaintState { state, hitbox }
     }
 
@@ -405,9 +412,13 @@ impl Element for ScrollBounce {
                 }
             });
         }
-        window.with_content_mask(Some(ContentMask { bounds }), |window| {
-            self.child.paint(window, cx)
-        });
+        window.with_content_mask(
+            Some(ContentMask {
+                bounds,
+                ..Default::default()
+            }),
+            |window| self.child.paint(window, cx),
+        );
     }
 }
 

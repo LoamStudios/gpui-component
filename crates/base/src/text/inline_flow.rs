@@ -9,12 +9,15 @@ use unicode_segmentation::UnicodeSegmentation as _;
 use gpui::{
     AbsoluteLength, AnyElement, App, AvailableSpace, Bounds, DefiniteLength, Element, ElementId,
     GlobalElementId, Hsla, ImageSource, InspectorElementId, InteractiveElement as _, IntoElement,
-    LayoutId, LineFragment as WrapLineFragment, ObjectFit, Pixels, Refineable as _, ShapedLine,
-    SharedString, Size, StatefulInteractiveElement as _, Styled, StyledImage as _, TextRun,
-    TextStyle, WhiteSpace, Window, img, point, prelude::FluentBuilder as _, px, relative, size,
+    LayoutId, ObjectFit, Pixels, Refineable as _, ShapedLine, SharedString, Size,
+    StatefulInteractiveElement as _, Styled, StyledImage as _, TextRun, TextStyle, TextSystem,
+    WhiteSpace, Window, img, point, prelude::FluentBuilder as _, px, relative, size,
 };
 
-use crate::text::text_view::{LinkClickHandlerFn, handle_link_click};
+use crate::text::{
+    line_wrapper::{LineFragment as WrapLineFragment, LineWrapper},
+    text_view::{LinkClickHandlerFn, handle_link_click},
+};
 
 use super::{
     inline::{Inline, InlineHighlight, InlineState, text_runs, text_size_ranges},
@@ -868,7 +871,7 @@ fn layout_measured_flow(
     text_style: &TextStyle,
     wrap_width: Option<Pixels>,
     window: &mut Window,
-    _cx: &mut App,
+    cx: &mut App,
 ) -> InlineFlowLayout {
     #[cfg(test)]
     FLOW_LAYOUTS.with(|layouts| layouts.set(layouts.get() + 1));
@@ -883,7 +886,15 @@ fn layout_measured_flow(
         .iter()
         .map(|object| object.clone().map(|object| object.fit_text(wrap_width)))
         .collect::<Vec<_>>();
-    let line_ranges = line_ranges(items, image_sizes, &objects, text_style, wrap_width, window);
+    let line_ranges = line_ranges(
+        items,
+        image_sizes,
+        &objects,
+        text_style,
+        wrap_width,
+        cx.text_system().clone(),
+        window,
+    );
     let font_size = text_style.font_size.to_pixels(rem_size);
     let mut fragments = Vec::new();
     let mut max_width = Pixels::ZERO;
@@ -1150,6 +1161,7 @@ fn line_ranges(
     objects: &[Option<MeasuredInlineObject>],
     text_style: &TextStyle,
     wrap_width: Option<Pixels>,
+    text_system: Arc<TextSystem>,
     window: &mut Window,
 ) -> Vec<Range<usize>> {
     let total_len = items.iter().map(MeasureItem::len).sum::<usize>();
@@ -1174,9 +1186,7 @@ fn line_ranges(
     };
     let rem_size = window.rem_size();
     let font_size = text_style.font_size.to_pixels(rem_size);
-    let mut wrapper = window
-        .text_system()
-        .line_wrapper(text_style.font(), font_size);
+    let mut wrapper = LineWrapper::new(text_style.font(), font_size, text_system);
     let mut ranges = Vec::new();
 
     for hard_line in hard_lines {
@@ -1268,7 +1278,7 @@ fn line_ranges(
 /// Where the first line of `fragments` (which start at byte `start`) wraps at
 /// `wrap_width`; `end` when it all fits.
 fn next_wrap(
-    wrapper: &mut gpui::LineWrapperHandle,
+    wrapper: &mut LineWrapper,
     fragments: &[WrapLineFragment],
     wrap_width: Pixels,
     start: usize,
@@ -1467,7 +1477,6 @@ fn push_text_wrap_fragments<'a>(
                     text,
                     font_size * highlight.font_size_scale.unwrap_or(1.),
                     &runs,
-                    None,
                 )
                 .width
         };
@@ -1602,7 +1611,7 @@ fn shape_line(
     runs: &[TextRun],
     window: &mut Window,
 ) -> ShapedLine {
-    window.text_system().shape_line(text, font_size, runs, None)
+    window.text_system().shape_line(text, font_size, runs)
 }
 
 /// The line height GPUI's text layout gives a plain line in `text_style`.

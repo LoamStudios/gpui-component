@@ -121,6 +121,7 @@ pub(crate) fn reveal_mask(
             gpui::point(bounds.left() - bleed, bounds.top() - bleed),
             gpui::point(end, bounds.bottom() + bleed),
         ),
+        ..Default::default()
     })
 }
 
@@ -576,6 +577,7 @@ pub(crate) fn pinned_plot_mask(bounds: Bounds<Pixels>, height: f32) -> ContentMa
             bounds.origin - gpui::point(bleed, bleed),
             gpui::point(bounds.right() + bleed, bounds.top() + px(height) + bleed),
         ),
+        ..Default::default()
     }
 }
 

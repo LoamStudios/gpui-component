@@ -527,7 +527,7 @@ pub(crate) fn text_rows_extent(text_layout: &TextLayout, line_height: Pixels) ->
         last_line_top += line.size(layout_line_height).height;
     }
     let last_row_top = lines.last().map_or(top, |line| {
-        last_line_top + line.wrap_boundaries.len() as f32 * layout_line_height
+        last_line_top + line.line_count().saturating_sub(1) as f32 * layout_line_height
     });
     (top, last_row_top + line_height)
 }

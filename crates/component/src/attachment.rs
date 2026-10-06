@@ -1,5 +1,6 @@
 use std::{rc::Rc, time::Duration};
 
+use gpui::AppContext as _;
 use gpui::{
     AbsoluteLength, AnyElement, App, Axis, Bounds, ClickEvent, ColorExt as _, ElementId, Hsla,
     ImageSource, InteractiveElement as _, IntoElement, MouseButton, ObjectFit, ParentElement, Path,

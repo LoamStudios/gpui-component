@@ -1,4 +1,5 @@
-use gpui::Corners;
+use gpui::AppContext as _;
+use gpui::{CaretPosition, Corners};
 use std::{
     cell::RefCell,
     collections::HashMap,
@@ -498,14 +499,14 @@ impl Inline {
     /// Paint selected bounds for debug.
     #[allow(unused)]
     fn paint_selected_bounds(&self, bounds: Bounds<Pixels>, window: &mut Window, cx: &mut App) {
-        window.paint_quad(gpui::PaintQuad {
+        window.paint_quad(gpui::quad(
             bounds,
-            background: gpui::hsla(0.58, 0.85, 0.62, 0.01).into(),
-            corner_radii: Corners::default(),
-            border_color: gpui::transparent_black(),
-            border_style: BorderStyle::default(),
-            border_widths: gpui::Edges::all(px(0.)),
-        });
+            Corners::default(),
+            gpui::hsla(0.58, 0.85, 0.62, 0.01),
+            gpui::Edges::all(px(0.)),
+            gpui::transparent_black(),
+            BorderStyle::default(),
+        ));
     }
 
     fn layout_selections(
@@ -688,23 +689,13 @@ impl Inline {
     ) -> Vec<Bounds<Pixels>> {
         let origin = text_layout.bounds().origin;
         let lines = text_layout.line_layouts();
-        let row_count: usize = lines
-            .iter()
-            .map(|line| line.wrap_boundaries.len() + 1)
-            .sum();
+        let row_count: usize = lines.iter().map(|line| line.visual_lines().len()).sum();
         let mut line_bounds = Vec::with_capacity(row_count);
         let mut row_ix = 0;
         let mut y = origin.y;
         for line in &lines {
-            let layout = &line.unwrapped_layout;
-            let mut row_start = 0;
-            let row_ends = line
-                .wrap_boundaries
-                .iter()
-                .map(|boundary| layout.runs[boundary.run_ix].glyphs[boundary.glyph_ix].index)
-                .chain([line.len()]);
-            for row_end in row_ends {
-                let mut width = layout.x_for_index(row_end) - layout.x_for_index(row_start);
+            for row in line.visual_lines() {
+                let mut width = row.advance_width;
                 row_ix += 1;
                 if row_ix < row_count {
                     width += line_height.half();
@@ -715,7 +706,6 @@ impl Inline {
                     line_bounds.push(bounds);
                 }
                 y += line_height;
-                row_start = row_end;
             }
         }
         line_bounds
@@ -1179,92 +1169,55 @@ struct GlyphBox {
     right: Pixels,
 }
 
-/// The glyphs of `text_layout`, sorted by the text they draw, each placed
-/// the way GPUI paints it: every row aligned in `align_width` by `align`,
-/// and a glyph reaching to the next one on its row, or to the row's end.
+/// The clusters of `text_layout`, sorted by the text they draw, each placed
+/// the way GPUI paints it: every row aligned in `align_width` by `align`.
 ///
-/// Glyphs are read in the order they paint, so right-to-left text, whose
-/// glyphs paint in the reverse order of its text, is placed as it shows.
+/// Each cluster is measured where the text layout puts it, so right-to-left
+/// text is placed as it shows.
 fn glyph_boxes(text_layout: &TextLayout, align: TextAlign, align_width: Pixels) -> Vec<GlyphBox> {
+    let line_height = text_layout.line_height();
     let mut boxes = Vec::new();
     let mut row = 0;
     let mut line_start = 0;
     for line in text_layout.line_layouts() {
-        let layout = &line.unwrapped_layout;
-        let glyphs = layout
-            .runs
+        let shifts = line
+            .visual_lines()
             .iter()
-            .flat_map(|run| run.glyphs.iter())
+            .map(|visual_line| aligned_row_left(align, align_width, visual_line.advance_width))
             .collect::<Vec<_>>();
-        // Each row starts at a wrap boundary glyph, and ends where the next
-        // row starts, or at the end of the line.
-        let run_offsets = layout
-            .runs
-            .iter()
-            .scan(0, |offset, run| {
-                let start = *offset;
-                *offset += run.glyphs.len();
-                Some(start)
-            })
-            .collect::<Vec<_>>();
-        let row_starts = line
-            .wrap_boundaries
-            .iter()
-            .map(|boundary| run_offsets[boundary.run_ix] + boundary.glyph_ix)
-            .collect::<Vec<_>>();
-        let line_boxes = boxes.len();
-        let mut from = 0;
-        for (row_in_line, to) in row_starts.iter().copied().chain([glyphs.len()]).enumerate() {
-            let start_x = if row_in_line == 0 {
-                Pixels::ZERO
-            } else {
-                glyphs[from].position.x
-            };
-            let end_x = glyphs
-                .get(to)
-                .map_or(layout.width, |glyph| glyph.position.x);
-            let shift = aligned_row_left(align, align_width, end_x - start_x) - start_x;
-            for ix in from..to {
-                let glyph = glyphs[ix];
-                let right = if ix + 1 < to {
-                    glyphs[ix + 1].position.x
-                } else {
-                    end_x
-                };
+        let mut index = 0;
+        while let Some(cluster) = line
+            .platform_layout
+            .logical_cluster_after(CaretPosition::attached_to_next_cluster(index))
+        {
+            if cluster.end <= index {
+                break;
+            }
+            for bounds in line.selection_bounds(cluster.clone(), line_height) {
+                let row_in_line = (bounds.origin.y / line_height).round() as usize;
+                let shift = shifts.get(row_in_line).copied().unwrap_or_default();
                 boxes.push(GlyphBox {
-                    text: line_start + glyph.index..line_start + glyph.index,
+                    text: line_start + cluster.start..line_start + cluster.end,
                     row: row + row_in_line,
-                    left: shift + glyph.position.x,
-                    right: shift + right,
+                    left: shift + bounds.left(),
+                    right: shift + bounds.right(),
                 });
             }
-            from = to;
+            index = cluster.end;
         }
 
-        // A glyph draws its text up to where the next glyph's text starts.
-        let line_boxes = &mut boxes[line_boxes..];
-        line_boxes.sort_by_key(|glyph| glyph.text.start);
-        let line_end = line_start + line.len();
-        for ix in 0..line_boxes.len() {
-            let start = line_boxes[ix].text.start;
-            line_boxes[ix].text.end = line_boxes[ix + 1..]
-                .iter()
-                .map(|glyph| glyph.text.start)
-                .find(|next| *next > start)
-                .unwrap_or(line_end);
-        }
-
-        row += line.wrap_boundaries.len() + 1;
-        line_start = line_end + 1;
+        row += line.visual_lines().len().max(1);
+        line_start += line.len() + 1;
     }
+    boxes.sort_by_key(|glyph| glyph.text.start);
     boxes
 }
 
 fn aligned_row_left(align: TextAlign, align_width: Pixels, width: Pixels) -> Pixels {
     match align {
-        TextAlign::Left => Pixels::ZERO,
+        TextAlign::Left | TextAlign::Start => Pixels::ZERO,
         TextAlign::Center => (align_width - width) / 2.,
-        TextAlign::Right => align_width - width,
+        TextAlign::Right | TextAlign::End => align_width - width,
     }
 }
 

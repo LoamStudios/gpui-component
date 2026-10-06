@@ -76,11 +76,6 @@ macro_rules! font_weight {
     gpui_macros::derive_inspector_reflection
 )]
 pub trait StyledExt: Styled + Sized {
-    fn refine_style(mut self, style: &StyleRefinement) -> Self {
-        self.style().refine(style);
-        self
-    }
-
     /// Lays children out in a row, centered on the cross axis.
     ///
     /// The centering is the desktop default for a row of controls — an icon

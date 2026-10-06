@@ -159,3 +159,11 @@ consts = "consts"
 
 [workspace.metadata.cargo-machete]
 ignored = ["log", "anyhow", "serde"]
+
+# Built against Loam Studios' fork of gpui-ce, which is past the Parley
+# text migration, in place of the crates.io release named above.
+[patch.crates-io]
+gpui-ce = { git = "https://github.com/LoamStudios/gpui-ce", rev = "491dfa8c39572c24596a2ca3f6949ab4a8542f06" }
+gpui_ce_platform = { git = "https://github.com/LoamStudios/gpui-ce", rev = "491dfa8c39572c24596a2ca3f6949ab4a8542f06" }
+gpui_ce_macros = { git = "https://github.com/LoamStudios/gpui-ce", rev = "491dfa8c39572c24596a2ca3f6949ab4a8542f06" }
+gpui_ce_web = { git = "https://github.com/LoamStudios/gpui-ce", rev = "491dfa8c39572c24596a2ca3f6949ab4a8542f06" }

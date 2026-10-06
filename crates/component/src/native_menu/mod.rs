@@ -205,13 +205,13 @@ impl NativeMenu {
 
         #[cfg(target_os = "macos")]
         {
-            macos::show(self.items, cx.asset_source().clone(), position, window, cx);
+            macos::show(self.items, registry_source(cx), position, window, cx);
         }
         #[cfg(target_os = "windows")]
         {
             windows::show(
                 self.items,
-                cx.asset_source().clone(),
+                registry_source(cx),
                 position,
                 cx.theme().is_dark(),
                 window,
@@ -221,6 +221,29 @@ impl NativeMenu {
         #[cfg(not(any(target_os = "macos", target_os = "windows")))]
         fallback::show(self.items, position, window, cx);
     }
+}
+
+/// The application's assets, read as an [`AssetSource`].
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+struct RegistrySource(Arc<gpui::AssetRegistry>);
+
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+impl AssetSource for RegistrySource {
+    fn load(&self, path: &str) -> gpui::Result<Option<std::borrow::Cow<'static, [u8]>>> {
+        Ok(self
+            .0
+            .load(path)
+            .map(|bytes| std::borrow::Cow::Owned(bytes.into_owned())))
+    }
+
+    fn list(&self, _path: &str) -> gpui::Result<Vec<SharedString>> {
+        Ok(Vec::new())
+    }
+}
+
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+fn registry_source(cx: &App) -> Arc<dyn AssetSource> {
+    Arc::new(RegistrySource(cx.assets().clone()))
 }
 
 #[cfg(any(target_os = "macos", target_os = "windows"))]
