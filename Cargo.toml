@@ -162,7 +162,7 @@ ignored = ["log", "anyhow", "serde"]
 # Built against Loam Studios' fork of gpui-ce, which is past the Parley
 # text migration, in place of the crates.io release named above.
 [patch.crates-io]
-gpui-ce = { git = "https://github.com/LoamStudios/gpui-ce", rev = "491dfa8c39572c24596a2ca3f6949ab4a8542f06" }
-gpui_ce_platform = { git = "https://github.com/LoamStudios/gpui-ce", rev = "491dfa8c39572c24596a2ca3f6949ab4a8542f06" }
-gpui_ce_macros = { git = "https://github.com/LoamStudios/gpui-ce", rev = "491dfa8c39572c24596a2ca3f6949ab4a8542f06" }
-gpui_ce_web = { git = "https://github.com/LoamStudios/gpui-ce", rev = "491dfa8c39572c24596a2ca3f6949ab4a8542f06" }
+gpui-ce = { git = "https://github.com/LoamStudios/gpui-ce", rev = "e5c5dfb12cf29952f44b6cd2e8d69f9ce5ba24c5" }
+gpui_ce_platform = { git = "https://github.com/LoamStudios/gpui-ce", rev = "e5c5dfb12cf29952f44b6cd2e8d69f9ce5ba24c5" }
+gpui_ce_macros = { git = "https://github.com/LoamStudios/gpui-ce", rev = "e5c5dfb12cf29952f44b6cd2e8d69f9ce5ba24c5" }
+gpui_ce_web = { git = "https://github.com/LoamStudios/gpui-ce", rev = "e5c5dfb12cf29952f44b6cd2e8d69f9ce5ba24c5" }
