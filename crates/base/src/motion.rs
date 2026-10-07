@@ -169,6 +169,20 @@ impl Transition {
     }
 }
 
+/// `duration` shortened by `factor`, as a reversal that has not run its whole
+/// course takes only as long as it ran.
+///
+/// A whole run keeps `duration` exactly: through `f32`, a tenth of a second
+/// scaled by one comes out a nanosecond long, and a transition sampled on its
+/// last frame would report itself still running.
+pub(crate) fn scale_duration(duration: Duration, factor: f32) -> Duration {
+    if factor >= 1.0 {
+        duration
+    } else {
+        duration.mul_f32(factor)
+    }
+}
+
 impl From<Duration> for SignedDuration {
     fn from(duration: Duration) -> Self {
         Self::positive(duration)
@@ -328,7 +342,7 @@ where
         } else {
             1.0
         };
-        let duration = policy.duration.mul_f32(reversing_factor);
+        let duration = scale_duration(policy.duration, reversing_factor);
         state.update(cx, |state, _| {
             state.from = sampled.clone();
             state.target = target.clone();
