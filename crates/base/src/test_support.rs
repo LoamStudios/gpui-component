@@ -310,7 +310,7 @@ impl<E: Element<PrepaintState = Option<Hitbox>> + InteractiveElement> Element fo
             selected: node.is_selected(),
             expanded: node.is_expanded(),
             value: node.value().map(|value| value.to_owned().into()),
-            bounds,
+            bounds: in_window(bounds, window),
             visible: false,
             focused: None,
             focus_action: node.supports_action(gpui::accesskit::Action::Focus),
@@ -356,8 +356,7 @@ impl<E: Element<PrepaintState = Option<Hitbox>> + InteractiveElement> Element fo
             .inner
             .interactivity()
             .compute_style(id, paint.0.as_ref(), window, cx);
-        let clipped = bounds
-            .intersect(&window.content_mask().bounds)
+        let clipped = in_window(bounds.intersect(&window.content_mask().bounds), window)
             .intersect(&Bounds::new(Default::default(), window.viewport_size()));
         {
             let mut facts = paint.1.facts.borrow_mut();
@@ -418,4 +417,25 @@ impl<E: Element<PrepaintState = Option<Hitbox>> + InteractiveElement + gpui::Par
 impl<E: Element<PrepaintState = Option<Hitbox>> + gpui::StatefulInteractiveElement>
     gpui::StatefulInteractiveElement for Observed<E>
 {
+}
+
+/// `bounds`, in the current element's coordinates, as the window shows
+/// them: the box around them under any transform an ancestor applies, so a
+/// test clicks where the element is drawn.
+fn in_window(bounds: Bounds<Pixels>, window: &Window) -> Bounds<Pixels> {
+    let transform = window.element_to_window();
+    if transform == gpui::kurbo::Affine::IDENTITY {
+        return bounds;
+    }
+    let rect = gpui::kurbo::Rect::new(
+        f64::from(bounds.left()),
+        f64::from(bounds.top()),
+        f64::from(bounds.right()),
+        f64::from(bounds.bottom()),
+    );
+    let mapped = transform.transform_rect_bbox(rect);
+    Bounds::from_corners(
+        gpui::point(px(mapped.x0 as f32), px(mapped.y0 as f32)),
+        gpui::point(px(mapped.x1 as f32), px(mapped.y1 as f32)),
+    )
 }

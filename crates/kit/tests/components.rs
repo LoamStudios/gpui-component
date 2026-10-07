@@ -140,3 +140,55 @@ fn scrollable_elements_forward_observed_focus_binding(cx: &mut TestAppContext) {
     })
     .unwrap();
 }
+
+struct Transformed {
+    clicks: usize,
+}
+impl Render for Transformed {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        // A zero-sized parent at the origin, so its transform maps its
+        // children's coordinates straight into the window's.
+        div().size_full().child(
+            div()
+                .absolute()
+                .size_0()
+                .transform(
+                    gpui::kurbo::Affine::translate((200., 100.)) * gpui::kurbo::Affine::scale(2.),
+                )
+                .child(
+                    div()
+                        .id("target")
+                        .test_support()
+                        .absolute()
+                        .left(px(10.))
+                        .top(px(20.))
+                        .w(px(30.))
+                        .h(px(40.))
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            this.clicks += 1;
+                            cx.notify();
+                        })),
+                ),
+        )
+    }
+}
+
+#[gpui::test]
+fn an_element_under_a_transform_is_found_and_clicked_where_it_is_drawn(cx: &mut TestAppContext) {
+    cx.update(gpui_component::init);
+    let (handle, view) = common::open_window(cx, Some(size(px(600.), px(500.))), |_, cx| {
+        cx.new(|_| Transformed { clicks: 0 })
+    });
+    cx.update_window(handle.into(), |_, window, cx| {
+        window.draw(cx).clear(cx);
+        let target = window.find("target");
+        assert_eq!(
+            target.bounds(),
+            gpui::Bounds::new(gpui::point(px(220.), px(140.)), size(px(60.), px(80.)))
+        );
+        assert!(target.visible());
+        window.click("target", cx);
+    })
+    .unwrap();
+    cx.read(|cx| assert_eq!(view.read(cx).clicks, 1));
+}
