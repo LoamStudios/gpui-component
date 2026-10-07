@@ -106,6 +106,7 @@ fn pointer_click(
     };
     window.dispatch_event(
         MouseMoveEvent {
+            pen: None,
             position,
             pressed_button: None,
             modifiers,
@@ -116,6 +117,7 @@ fn pointer_click(
     window.render_frame(cx);
     window.dispatch_event(
         MouseDownEvent {
+            pen: None,
             position,
             button: MouseButton::Left,
             modifiers,
@@ -128,6 +130,7 @@ fn pointer_click(
     window.render_frame(cx);
     window.dispatch_event(
         MouseUpEvent {
+            pen: None,
             position,
             button: MouseButton::Left,
             modifiers,
@@ -971,7 +974,7 @@ fn dragging_beyond_viewport_autoscrolls_selection_and_release_stops_it(cx: &mut 
             let from = caret_point(text.read(cx));
             let outside = point(from.x, text.read(cx).input_bounds().bottom() + px(40.));
             window.dispatch_event(
-                MouseMoveEvent {
+                MouseMoveEvent { pen: None,
                     position: from,
                     pressed_button: None,
                     modifiers: Default::default(),
@@ -981,7 +984,7 @@ fn dragging_beyond_viewport_autoscrolls_selection_and_release_stops_it(cx: &mut 
             );
             window.render_frame(cx);
             window.dispatch_event(
-                MouseDownEvent {
+                MouseDownEvent { pen: None,
                     position: from,
                     button: MouseButton::Left,
                     click_count: 1,
@@ -994,7 +997,7 @@ fn dragging_beyond_viewport_autoscrolls_selection_and_release_stops_it(cx: &mut 
             window.render_frame(cx);
             assert_eq!(text.read(cx).cursor(), 1);
             window.dispatch_event(
-                MouseMoveEvent {
+                MouseMoveEvent { pen: None,
                     position: outside,
                     pressed_button: Some(MouseButton::Left),
                     modifiers: Default::default(),
@@ -1034,6 +1037,7 @@ fn dragging_beyond_viewport_autoscrolls_selection_and_release_stops_it(cx: &mut 
             assert_eq!(text.read(cx).value(), value);
             window.dispatch_event(
                 MouseUpEvent {
+                    pen: None,
                     position: outside,
                     button: MouseButton::Left,
                     click_count: 1,

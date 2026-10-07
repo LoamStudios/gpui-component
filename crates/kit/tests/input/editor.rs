@@ -336,6 +336,7 @@ fn multicursor_vertical_selection_replaces_and_undoes_each_range(cx: &mut TestAp
             };
             window.dispatch_event(
                 MouseMoveEvent {
+                    pen: None,
                     position,
                     pressed_button: None,
                     modifiers,
@@ -346,6 +347,7 @@ fn multicursor_vertical_selection_replaces_and_undoes_each_range(cx: &mut TestAp
             window.render_frame(cx);
             window.dispatch_event(
                 MouseDownEvent {
+                    pen: None,
                     position,
                     button: MouseButton::Left,
                     modifiers,
@@ -358,6 +360,7 @@ fn multicursor_vertical_selection_replaces_and_undoes_each_range(cx: &mut TestAp
             window.render_frame(cx);
             window.dispatch_event(
                 MouseUpEvent {
+                    pen: None,
                     position,
                     button: MouseButton::Left,
                     modifiers,

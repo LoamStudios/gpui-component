@@ -1143,6 +1143,7 @@ impl Element for Inline {
                         cx.stop_propagation();
                         let click = ClickEvent::Mouse(MouseClickEvent {
                             down: MouseDownEvent {
+                                pen: None,
                                 button: event.button,
                                 position: event.position,
                                 modifiers: event.modifiers,

@@ -347,6 +347,7 @@ impl Element for InlineObject {
                 cx.stop_propagation();
                 let click = gpui::ClickEvent::Mouse(gpui::MouseClickEvent {
                     down: MouseDownEvent {
+                        pen: None,
                         button: event.button,
                         position: event.position,
                         modifiers: event.modifiers,

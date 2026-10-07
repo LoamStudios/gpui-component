@@ -4371,6 +4371,7 @@ mod tests {
 
         let position = layout.position_for_index(7).unwrap();
         cx.simulate_event(MouseDownEvent {
+            pen: None,
             position,
             modifiers: gpui::Modifiers::default(),
             button: MouseButton::Left,
@@ -4378,6 +4379,7 @@ mod tests {
             first_mouse: false,
         });
         cx.simulate_event(MouseUpEvent {
+            pen: None,
             position,
             modifiers: gpui::Modifiers::default(),
             button: MouseButton::Left,
@@ -4399,6 +4401,7 @@ mod tests {
         });
 
         cx.simulate_event(MouseDownEvent {
+            pen: None,
             position,
             modifiers: gpui::Modifiers::default(),
             button: MouseButton::Left,
@@ -4406,6 +4409,7 @@ mod tests {
             first_mouse: false,
         });
         cx.simulate_event(MouseUpEvent {
+            pen: None,
             position,
             modifiers: gpui::Modifiers::default(),
             button: MouseButton::Left,

@@ -434,6 +434,7 @@ mod tests {
             Modifiers::default(),
         );
         cx.simulate_event(gpui::MouseDownEvent {
+            pen: None,
             button: MouseButton::Left,
             position: point(px(10.), px(10.)),
             modifiers: Modifiers::default(),
@@ -449,6 +450,7 @@ mod tests {
         });
 
         cx.simulate_event(gpui::MouseUpEvent {
+            pen: None,
             button: MouseButton::Left,
             position: point(px(10.), px(10.)),
             modifiers: Modifiers::default(),

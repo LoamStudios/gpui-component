@@ -1316,6 +1316,7 @@ mod tests {
 
         let position = point(px(10.), px(10.));
         cx.simulate_event(MouseDownEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -1323,6 +1324,7 @@ mod tests {
             first_mouse: false,
         });
         cx.simulate_event(MouseUpEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -2040,6 +2042,7 @@ mod tests {
         // selection (Inline), not a window-level drag selection.
         let position = point(px(10.), px(15.));
         cx.simulate_event(MouseDownEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -2047,6 +2050,7 @@ mod tests {
             first_mouse: false,
         });
         cx.simulate_event(MouseUpEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,

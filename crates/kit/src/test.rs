@@ -92,6 +92,7 @@ fn move_pointer(
 ) {
     window.dispatch_event(
         MouseMoveEvent {
+            pen: None,
             position,
             pressed_button,
             modifiers: Default::default(),
@@ -111,6 +112,7 @@ fn mouse_down(
 ) {
     window.dispatch_event(
         MouseDownEvent {
+            pen: None,
             button,
             position,
             modifiers: Default::default(),
@@ -132,6 +134,7 @@ fn mouse_up(
 ) {
     window.dispatch_event(
         MouseUpEvent {
+            pen: None,
             button,
             position,
             modifiers: Default::default(),

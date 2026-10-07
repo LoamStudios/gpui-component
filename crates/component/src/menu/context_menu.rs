@@ -542,6 +542,7 @@ mod tests {
 
         // Right-click inside the tab to open the context menu.
         cx.simulate_event(MouseDownEvent {
+            pen: None,
             button: MouseButton::Right,
             position: point(px(50.), px(70.)),
             modifiers: Default::default(),

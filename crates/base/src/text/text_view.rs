@@ -1225,6 +1225,7 @@ mod tests {
         let formula = regions[1];
         let position = formula.center();
         cx.simulate_event(MouseDownEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -1232,6 +1233,7 @@ mod tests {
             first_mouse: false,
         });
         cx.simulate_event(MouseUpEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -1273,6 +1275,7 @@ mod tests {
         });
         let position = regions[1].center();
         cx.simulate_event(MouseDownEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -1280,6 +1283,7 @@ mod tests {
             first_mouse: false,
         });
         cx.simulate_event(MouseUpEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -2443,6 +2447,7 @@ mod tests {
         });
         let position = point(px(10.), px(16.));
         cx.simulate_event(MouseDownEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -2450,6 +2455,7 @@ mod tests {
             first_mouse: false,
         });
         cx.simulate_event(MouseUpEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -2477,6 +2483,7 @@ mod tests {
 
         let position = point(px(10.), px(10.));
         cx.simulate_event(MouseDownEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,
@@ -2484,6 +2491,7 @@ mod tests {
             first_mouse: false,
         });
         cx.simulate_event(MouseUpEvent {
+            pen: None,
             position,
             modifiers: Modifiers::default(),
             button: MouseButton::Left,

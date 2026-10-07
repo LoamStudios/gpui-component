@@ -1587,6 +1587,7 @@ mod tests {
 
     fn left_press(position: Point<Pixels>) -> MouseDownEvent {
         MouseDownEvent {
+            pen: None,
             button: MouseButton::Left,
             position,
             modifiers: Modifiers::default(),
