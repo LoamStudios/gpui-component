@@ -2332,34 +2332,63 @@ mod tests {
         }
     }
 
-    #[gpui::test]
-    fn wrapping_rows_remeasure_for_the_list_content_width(cx: &mut TestAppContext) {
+    /// Opens `harness` in an application whose text wraps: GPUI's own test
+    /// text system lays every paragraph out on one row.
+    fn open_wrapping(
+        harness: impl FnOnce(&mut Window, &mut gpui::App) -> WrappingHarness + 'static,
+    ) -> (
+        gpui::HeadlessAppContext,
+        gpui::WindowHandle<WrappingHarness>,
+        Entity<WrappingHarness>,
+    ) {
+        let mut cx = gpui::HeadlessAppContext::new(std::sync::Arc::new(
+            gpui_base::test_text_system::WideMonoTextSystem,
+        ));
         cx.update(crate::init);
+        let window = cx
+            .open_window(gpui::size(px(800.), px(600.)), |window, cx| {
+                let harness = harness(window, cx);
+                cx.new(|_| harness)
+            })
+            .unwrap();
+        let view = cx
+            .update_window(window.into(), |root, _, _| {
+                root.downcast::<WrappingHarness>().unwrap()
+            })
+            .unwrap();
+        (cx, window, view)
+    }
 
-        let (harness, cx) = cx.add_window_view(|window, cx| WrappingHarness {
+    /// Runs pending work and draws a frame, twice, so the list measures the
+    /// rows it laid out.
+    fn settle(cx: &mut gpui::HeadlessAppContext, window: gpui::WindowHandle<WrappingHarness>) {
+        for _ in 0..2 {
+            cx.run_until_parked();
+            cx.update_window(window.into(), |_, window, cx| window.draw(cx).clear(cx))
+                .unwrap();
+        }
+    }
+
+    #[test]
+    fn wrapping_rows_remeasure_for_the_list_content_width() {
+        let (mut cx, window, harness) = open_wrapping(|window, cx| WrappingHarness {
             state: cx.new(|cx| CommandState::new(window, cx)),
             width: px(360.),
             no_wrap: false,
         });
-
-        cx.run_until_parked();
-        cx.update(|window, cx| _ = window.draw(cx));
-        cx.run_until_parked();
-        cx.update(|window, cx| _ = window.draw(cx));
-
-        let wide = cx.update(|_, cx| harness.read(cx).state.read(cx).row_sizes[0].height);
-
-        cx.update(|_, cx| {
-            harness.update(cx, |harness, cx| {
-                harness.width = px(120.);
-                cx.notify();
-            })
+        settle(&mut cx, window);
+        let wide = harness.read_with(&cx, |harness, cx| {
+            harness.state.read(cx).row_sizes[0].height
         });
-        cx.run_until_parked();
-        cx.update(|window, cx| _ = window.draw(cx));
-        cx.run_until_parked();
-        cx.update(|window, cx| _ = window.draw(cx));
-        let narrow = cx.update(|_, cx| harness.read(cx).state.read(cx).row_sizes[0].height);
+
+        harness.update(&mut cx, |harness, cx| {
+            harness.width = px(120.);
+            cx.notify();
+        });
+        settle(&mut cx, window);
+        let narrow = harness.read_with(&cx, |harness, cx| {
+            harness.state.read(cx).row_sizes[0].height
+        });
 
         assert!(
             narrow > wide,
@@ -2400,32 +2429,26 @@ mod tests {
         );
     }
 
-    #[gpui::test]
-    fn wrapping_rows_remeasure_when_inherited_typography_changes(cx: &mut TestAppContext) {
-        cx.update(crate::init);
-
-        let (harness, cx) = cx.add_window_view(|window, cx| WrappingHarness {
+    #[test]
+    fn wrapping_rows_remeasure_when_inherited_typography_changes() {
+        let (mut cx, window, harness) = open_wrapping(|window, cx| WrappingHarness {
             state: cx.new(|cx| CommandState::new(window, cx)),
             width: px(160.),
             no_wrap: false,
         });
-
-        cx.run_until_parked();
-        cx.update(|window, cx| _ = window.draw(cx));
-        cx.run_until_parked();
-        cx.update(|window, cx| _ = window.draw(cx));
-        let wrapped_height = cx.update(|_, cx| harness.read(cx).state.read(cx).row_sizes[0].height);
-
-        cx.update(|window, cx| {
-            harness.update(cx, |harness, cx| {
-                harness.no_wrap = true;
-                cx.notify();
-            });
-            _ = window.draw(cx);
+        settle(&mut cx, window);
+        let wrapped_height = harness.read_with(&cx, |harness, cx| {
+            harness.state.read(cx).row_sizes[0].height
         });
-        cx.run_until_parked();
-        cx.update(|window, cx| _ = window.draw(cx));
-        let no_wrap_height = cx.update(|_, cx| harness.read(cx).state.read(cx).row_sizes[0].height);
+
+        harness.update(&mut cx, |harness, cx| {
+            harness.no_wrap = true;
+            cx.notify();
+        });
+        settle(&mut cx, window);
+        let no_wrap_height = harness.read_with(&cx, |harness, cx| {
+            harness.state.read(cx).row_sizes[0].height
+        });
         assert!(
             no_wrap_height < wrapped_height,
             "a changed inherited typography should remeasure the fixed-width row ({no_wrap_height:?} vs {wrapped_height:?})",

@@ -8,7 +8,7 @@ use gpui::{
 };
 use smallvec::SmallVec;
 
-use crate::{RoleOverride, StateStyle, StyledExt as _, TestSupportExt as _};
+use crate::{RoleOverride, StateStyle, TestSupportExt as _};
 
 type ChangeHandler = Rc<dyn Fn(CheckboxState, &ClickEvent, &mut Window, &mut App)>;
 

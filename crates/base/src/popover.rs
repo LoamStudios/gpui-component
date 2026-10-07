@@ -9,7 +9,7 @@ use gpui::{
 };
 
 use crate::{
-    DeferredPopover, GlobalState, Popup, ResolvedPosition, Selectable, StyledExt as _,
+    DeferredPopover, GlobalState, Popup, ResolvedPosition, Selectable,
     actions::{Cancel, Confirm},
 };
 
@@ -379,7 +379,7 @@ impl RenderOnce for Popover {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gpui::{AppContext as _, Context, Render, point, px};
+    use gpui::{Context, Render, point, px};
     use std::{cell::RefCell, rc::Rc};
 
     /// Popover state lives in element state, which is collected as soon as it

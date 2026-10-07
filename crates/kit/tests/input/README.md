@@ -185,7 +185,7 @@ the secret through accessibility.
 Leave `update_window` before checking deferred owner callbacks. Use
 `cx.run_until_parked()` for queued work or `wait_for` for a bounded asynchronous
 condition. History tests that depend on focus/blur callbacks must first activate
-the window with `window.activate_window()` inside `cx.update_window`, then allow
+the window with `window.activate()` inside `cx.update_window`, then allow
 queued work to settle. See `history::blur_splits_typing_without_moving_the_caret`;
 assigning a focus handle alone does not establish an active-window callback flow.
 Do not add wall-clock sleeps. For geometry, check relationships

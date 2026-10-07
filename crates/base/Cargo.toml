@@ -19,7 +19,9 @@ doctest = false
 
 [features]
 decimal = ["dep:rust_decimal"]
-test-support = ["gpui/test-support"]
+test-support = ["gpui/test-support", "test-text-system"]
+# A deterministic, wrapping text system for tests that lay text out.
+test-text-system = []
 inspector = ["gpui_macros/inspector", "gpui/inspector"]
 
 [dependencies]

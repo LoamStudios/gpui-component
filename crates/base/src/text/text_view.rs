@@ -8,7 +8,6 @@ use gpui::{
     StyleRefinement, Styled, Window, div, point, px,
 };
 
-use crate::StyledExt;
 use crate::text::TextViewFormat;
 use crate::text::markdown_ext::{MarkdownExtensions, MarkdownNode, MarkdownPlugin};
 use crate::text::node::{CodeBlock, TableData};
@@ -1325,30 +1324,34 @@ mod tests {
     /// list when the count changes, so without an explicit re-measure every
     /// cached height stays with the previous document and the scroll extent
     /// keeps describing it.
-    #[gpui::test]
-    fn replacing_a_document_with_an_equal_block_count_remeasures(cx: &mut TestAppContext) {
-        cx.update(crate::init);
+    #[test]
+    fn replacing_a_document_with_an_equal_block_count_remeasures() {
+        // The heights come from wrapped paragraphs, and GPUI's own test text
+        // system lays every paragraph out on one row.
+        let mut app =
+            gpui::TestApp::with_text_system(Arc::new(crate::test_text_system::WideMonoTextSystem));
+        app.update(crate::init);
 
         const BLOCKS: usize = 24;
         let short = document_of(BLOCKS, 1);
         let tall = document_of(BLOCKS, 60);
 
-        let (root, cx) = cx.add_window_view(|_, cx| ScrollExtentTestRoot {
+        let mut window = app.open_window(|_, cx| ScrollExtentTestRoot {
             text_view: cx.new(|cx| TextViewState::markdown(&short, cx)),
         });
-        let cx: &mut VisualTestContext = cx;
 
         // The list is populated and measured during layout, so every
         // assertion below has to follow a real frame.
-        let settle = |cx: &mut VisualTestContext| {
-            cx.run_until_parked();
-            cx.update(|window, cx| window.draw(cx).clear(cx));
-            cx.run_until_parked();
+        let settle = |app: &mut gpui::TestApp,
+                      window: &mut gpui::TestAppWindow<ScrollExtentTestRoot>| {
+            app.run_until_parked();
+            window.draw();
+            app.run_until_parked();
         };
-        settle(cx);
+        settle(&mut app, &mut window);
 
-        let scroll_extent = |cx: &mut VisualTestContext| {
-            root.read_with(cx, |root, cx| {
+        let scroll_extent = |window: &gpui::TestAppWindow<ScrollExtentTestRoot>| {
+            window.read(|root, cx| {
                 root.text_view
                     .read(cx)
                     .list_state()
@@ -1357,15 +1360,15 @@ mod tests {
             })
         };
 
-        let short_extent = scroll_extent(cx);
+        let short_extent = scroll_extent(&window);
 
-        root.update(cx, |root, cx| {
+        window.update(|root, _, cx| {
             root.text_view
                 .update(cx, |state, cx| state.set_text(&tall, cx));
         });
-        settle(cx);
+        settle(&mut app, &mut window);
 
-        root.read_with(cx, |root, cx| {
+        window.read(|root, cx| {
             assert_eq!(
                 root.text_view.read(cx).list_state().item_count(),
                 BLOCKS,
@@ -1373,7 +1376,7 @@ mod tests {
             );
         });
 
-        let tall_extent = scroll_extent(cx);
+        let tall_extent = scroll_extent(&window);
         assert!(
             tall_extent > short_extent * 5.,
             "a much taller document must grow the scroll extent, but it went from \

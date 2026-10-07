@@ -3428,10 +3428,7 @@ fn split_runs_by_bg_segments(
 mod tests {
     use super::*;
     use crate::input::{EditorMode, EditorState, FoldRange, RangeDecoration, Redo, Undo};
-    use gpui::{
-        AppContext as _, Context, EntityInputHandler as _, Render, TestAppContext,
-        VisualTestContext, div,
-    };
+    use gpui::{Context, EntityInputHandler as _, Render, TestAppContext, VisualTestContext, div};
 
     #[test]
     fn line_number_column_stays_at_three_digits_then_grows_up_to_seven() {

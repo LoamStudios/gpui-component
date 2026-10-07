@@ -2643,9 +2643,11 @@ mod tests {
     }
 
     mod reveal_range {
+        use std::sync::Arc;
+
         use gpui::{
             Entity, InteractiveElement as _, ListAlignment, ListState, ScrollHandle,
-            StatefulInteractiveElement as _, TestAppContext, VisualTestContext, div, list,
+            StatefulInteractiveElement as _, TestApp, TestAppContext, TestAppWindow, div, list,
         };
 
         use super::super::*;
@@ -2723,24 +2725,55 @@ mod tests {
             }
         }
 
-        fn window<'a>(
-            markdown: &str,
-            container: Container,
-            cx: &'a mut TestAppContext,
-        ) -> (Entity<TextViewState>, &'a mut VisualTestContext) {
-            cx.update(crate::init);
-            let (root, cx) = cx.add_window_view(|_, cx| Root {
-                state: cx.new(|cx| TextViewState::markdown(markdown, cx)),
+        /// An application whose text wraps, with the view in a window.
+        ///
+        /// GPUI's own test text system lays every paragraph out on one row,
+        /// so the lines these tests reveal need a text system that wraps.
+        struct Harness {
+            app: TestApp,
+            window: TestAppWindow<Root>,
+        }
+
+        impl Harness {
+            fn update<R>(
+                &mut self,
+                state: &Entity<TextViewState>,
+                f: impl FnOnce(&mut TextViewState, &mut Context<TextViewState>) -> R,
+            ) -> R {
+                self.app.update_entity(state, f)
+            }
+
+            fn read<R>(
+                &self,
+                state: &Entity<TextViewState>,
+                f: impl FnOnce(&TextViewState) -> R,
+            ) -> R {
+                self.app.read_entity(state, |state, _| f(state))
+            }
+
+            fn run_until_parked(&self) {
+                self.app.run_until_parked();
+            }
+        }
+
+        fn window(markdown: &str, container: Container) -> (Entity<TextViewState>, Harness) {
+            let mut app =
+                TestApp::with_text_system(Arc::new(crate::test_text_system::WideMonoTextSystem));
+            app.update(crate::init);
+            let markdown = markdown.to_string();
+            let window = app.open_window(move |_, cx| Root {
+                state: cx.new(|cx| TextViewState::markdown(&markdown, cx)),
                 container,
             });
-            cx.run_until_parked();
-            draw(cx);
-            let state = root.read_with(cx, |root, _| root.state.clone());
+            app.run_until_parked();
+            let mut cx = Harness { app, window };
+            draw(&mut cx);
+            let state = cx.window.read(|root, _| root.state.clone());
             (state, cx)
         }
 
-        fn draw(cx: &mut VisualTestContext) {
-            cx.update(|window, cx| window.draw(cx).clear(cx));
+        fn draw(cx: &mut Harness) {
+            cx.window.draw();
         }
 
         /// Asks to reveal the first occurrence of `needle`, then runs `then`
@@ -2748,10 +2781,10 @@ mod tests {
         fn request(
             state: &Entity<TextViewState>,
             needle: &str,
-            cx: &mut VisualTestContext,
+            cx: &mut Harness,
             then: impl FnOnce(&mut TextViewState, &mut Context<TextViewState>),
         ) {
-            state.update(cx, |state, cx| {
+            cx.update(&state, |state, cx| {
                 let text = state.rendered_text();
                 let start = text.as_str().find(needle).unwrap();
                 state.reveal_range(start..start + needle.len(), cx).unwrap();
@@ -2760,22 +2793,19 @@ mod tests {
         }
 
         /// Reveals the first occurrence of `needle` and draws a few frames.
-        fn reveal(state: &Entity<TextViewState>, needle: &str, cx: &mut VisualTestContext) {
+        fn reveal(state: &Entity<TextViewState>, needle: &str, cx: &mut Harness) {
             request(state, needle, cx, |_, _| {});
             for _ in 0..3 {
                 draw(cx);
             }
         }
 
-        fn is_pending(state: &Entity<TextViewState>, cx: &mut VisualTestContext) -> bool {
-            state.read_with(cx, |state, _| state.pending_reveal.is_some())
+        fn is_pending(state: &Entity<TextViewState>, cx: &mut Harness) -> bool {
+            cx.read(state, |state| state.pending_reveal.is_some())
         }
 
-        fn scroll_top(
-            state: &Entity<TextViewState>,
-            cx: &mut VisualTestContext,
-        ) -> gpui::ListOffset {
-            state.read_with(cx, |state, _| state.list_state.logical_scroll_top())
+        fn scroll_top(state: &Entity<TextViewState>, cx: &mut Harness) -> gpui::ListOffset {
+            cx.read(state, |state| state.list_state.logical_scroll_top())
         }
 
         fn paragraphs(count: usize) -> String {
@@ -2792,9 +2822,9 @@ mod tests {
                 .join(" ")
         }
 
-        #[gpui::test]
-        fn a_scrollable_view_scrolls_to_an_offscreen_block(cx: &mut TestAppContext) {
-            let (state, cx) = window(&paragraphs(200), Container::Scrollable, cx);
+        #[test]
+        fn a_scrollable_view_scrolls_to_an_offscreen_block() {
+            let (state, cx) = &mut window(&paragraphs(200), Container::Scrollable);
             reveal(&state, "paragraph 150", cx);
             assert!(!is_pending(&state, cx));
             let top = scroll_top(&state, cx);
@@ -2805,26 +2835,26 @@ mod tests {
             assert!(scroll_top(&state, cx).item_ix <= 3);
         }
 
-        #[gpui::test]
-        fn an_append_adding_blocks_keeps_the_scroll_position(cx: &mut TestAppContext) {
-            let (state, cx) = window(&paragraphs(200), Container::Scrollable, cx);
+        #[test]
+        fn an_append_adding_blocks_keeps_the_scroll_position() {
+            let (state, cx) = &mut window(&paragraphs(200), Container::Scrollable);
             reveal(&state, "paragraph 100", cx);
             let top = scroll_top(&state, cx);
             assert!(top.item_ix > 0, "{top:?}");
 
-            state.update(cx, |state, cx| state.push_str("\n\nparagraph 200", cx));
+            cx.update(&state, |state, cx| state.push_str("\n\nparagraph 200", cx));
             cx.run_until_parked();
             draw(cx);
 
-            state.read_with(cx, |state, _| {
+            cx.read(state, |state| {
                 assert_eq!(state.list_state.item_count(), 201);
             });
             assert_unmoved(&state, top, cx);
         }
 
-        #[gpui::test]
-        fn a_scrollable_view_scrolls_to_a_line_inside_a_long_paragraph(cx: &mut TestAppContext) {
-            let (state, cx) = window(&words(400), Container::Scrollable, cx);
+        #[test]
+        fn a_scrollable_view_scrolls_to_a_line_inside_a_long_paragraph() {
+            let (state, cx) = &mut window(&words(400), Container::Scrollable);
             reveal(&state, "w390", cx);
             assert!(!is_pending(&state, cx));
             let top = scroll_top(&state, cx);
@@ -2832,9 +2862,9 @@ mod tests {
             assert!(top.offset_in_item > px(100.), "{top:?}");
         }
 
-        #[gpui::test]
-        fn revealing_a_visible_line_does_not_scroll(cx: &mut TestAppContext) {
-            let (state, cx) = window(&words(400), Container::Scrollable, cx);
+        #[test]
+        fn revealing_a_visible_line_does_not_scroll() {
+            let (state, cx) = &mut window(&words(400), Container::Scrollable);
             reveal(&state, "w200", cx);
             let top = scroll_top(&state, cx);
             assert!(top.offset_in_item > px(0.), "{top:?}");
@@ -2850,10 +2880,10 @@ mod tests {
             }
         }
 
-        #[gpui::test]
-        fn an_enclosing_list_scrolls_to_a_line_of_a_fit_content_view(cx: &mut TestAppContext) {
+        #[test]
+        fn an_enclosing_list_scrolls_to_a_line_of_a_fit_content_view() {
             let outer = ListState::new(2, ListAlignment::Top, px(1000.));
-            let (state, cx) = window(&words(400), Container::List(outer.clone()), cx);
+            let (state, cx) = &mut window(&words(400), Container::List(outer.clone()));
             reveal(&state, "w390", cx);
             assert!(!is_pending(&state, cx));
             let top = outer.logical_scroll_top();
@@ -2861,18 +2891,18 @@ mod tests {
             assert!(top.offset_in_item > px(100.), "{top:?}");
         }
 
-        #[gpui::test]
-        fn on_reveal_scrolls_a_container_that_ignores_scroll_requests(cx: &mut TestAppContext) {
+        #[test]
+        fn on_reveal_scrolls_a_container_that_ignores_scroll_requests() {
             let handle = ScrollHandle::new();
-            let (state, cx) = window(&words(400), Container::Div(handle.clone()), cx);
+            let (state, cx) = &mut window(&words(400), Container::Div(handle.clone()));
             reveal(&state, "w390", cx);
             assert!(!is_pending(&state, cx));
             assert!(handle.offset().y < px(-100.), "{:?}", handle.offset());
         }
 
-        #[gpui::test]
-        fn a_reveal_that_cannot_be_shown_gives_up(cx: &mut TestAppContext) {
-            let (state, cx) = window(&words(4000), Container::Fixed, cx);
+        #[test]
+        fn a_reveal_that_cannot_be_shown_gives_up() {
+            let (state, cx) = &mut window(&words(4000), Container::Fixed);
             reveal(&state, "w3990", cx);
             assert!(is_pending(&state, cx));
             for _ in 0..10 {
@@ -2881,9 +2911,9 @@ mod tests {
             assert!(!is_pending(&state, cx));
         }
 
-        #[gpui::test]
-        fn a_reveal_not_carried_out_in_time_is_dropped(cx: &mut TestAppContext) {
-            let (state, cx) = window(&paragraphs(200), Container::Scrollable, cx);
+        #[test]
+        fn a_reveal_not_carried_out_in_time_is_dropped() {
+            let (state, cx) = &mut window(&paragraphs(200), Container::Scrollable);
             request(&state, "paragraph 150", cx, |_, cx| {
                 cx.background_executor()
                     .advance_clock(std::time::Duration::from_secs(2))
@@ -2893,13 +2923,13 @@ mod tests {
             assert_eq!(scroll_top(&state, cx).item_ix, 0);
         }
 
-        #[gpui::test]
-        fn an_empty_range_reveals_its_line(cx: &mut TestAppContext) {
-            let (state, cx) = window(&words(400), Container::Scrollable, cx);
+        #[test]
+        fn an_empty_range_reveals_its_line() {
+            let (state, cx) = &mut window(&words(400), Container::Scrollable);
             reveal(&state, "w390", cx);
             let top = scroll_top(&state, cx);
             // A position on a visible line leaves the view where it is.
-            state.update(cx, |state, cx| {
+            cx.update(&state, |state, cx| {
                 let text = state.rendered_text();
                 let start = text.as_str().find("w391").unwrap();
                 state.reveal_range(start..start, cx).unwrap();
@@ -2915,14 +2945,14 @@ mod tests {
             );
         }
 
-        #[gpui::test]
-        fn a_position_after_the_last_character_reveals_its_line(cx: &mut TestAppContext) {
-            let (state, cx) = window(&words(400), Container::Scrollable, cx);
+        #[test]
+        fn a_position_after_the_last_character_reveals_its_line() {
+            let (state, cx) = &mut window(&words(400), Container::Scrollable);
             reveal(&state, "w399", cx);
             let top = scroll_top(&state, cx);
             assert!(top.offset_in_item > px(1000.), "{top:?}");
             // The end of the text, on the visible last line.
-            state.update(cx, |state, cx| {
+            cx.update(&state, |state, cx| {
                 let text = state.rendered_text();
                 let end = text.as_str().find("w399").unwrap() + "w399".len();
                 state.reveal_range(end..end, cx).unwrap();
@@ -2942,9 +2972,9 @@ mod tests {
         fn reveal_at(
             state: &Entity<TextViewState>,
             range: impl FnOnce(&str) -> std::ops::Range<usize>,
-            cx: &mut VisualTestContext,
+            cx: &mut Harness,
         ) {
-            state.update(cx, |state, cx| {
+            cx.update(&state, |state, cx| {
                 let text = state.rendered_text();
                 let range = range(text.as_str());
                 state.reveal_range(range, cx).unwrap();
@@ -2954,11 +2984,7 @@ mod tests {
             }
         }
 
-        fn assert_unmoved(
-            state: &Entity<TextViewState>,
-            top: gpui::ListOffset,
-            cx: &mut VisualTestContext,
-        ) {
+        fn assert_unmoved(state: &Entity<TextViewState>, top: gpui::ListOffset, cx: &mut Harness) {
             assert!(!is_pending(state, cx));
             let now = scroll_top(state, cx);
             assert_eq!(
@@ -2967,9 +2993,9 @@ mod tests {
             );
         }
 
-        #[gpui::test]
-        fn the_end_of_the_text_and_its_separators_reveal_the_last_line(cx: &mut TestAppContext) {
-            let (state, cx) = window(&words(400), Container::Scrollable, cx);
+        #[test]
+        fn the_end_of_the_text_and_its_separators_reveal_the_last_line() {
+            let (state, cx) = &mut window(&words(400), Container::Scrollable);
             reveal(&state, "w399", cx);
             let top = scroll_top(&state, cx);
             assert!(top.offset_in_item > px(1000.), "{top:?}");
@@ -2984,7 +3010,7 @@ mod tests {
                 .map(|ix| format!("line {ix}"))
                 .collect::<Vec<_>>()
                 .join("\n");
-            state.update(cx, |state, cx| {
+            cx.update(&state, |state, cx| {
                 state.set_text(&format!("```\n{code}\n```"), cx)
             });
             cx.run_until_parked();
@@ -2995,14 +3021,14 @@ mod tests {
             assert_unmoved(&state, top, cx);
         }
 
-        #[gpui::test]
-        fn the_end_of_a_block_above_reveals_its_last_line(cx: &mut TestAppContext) {
+        #[test]
+        fn the_end_of_a_block_above_reveals_its_last_line() {
             let second = (0..400)
                 .map(|ix| format!("v{ix}"))
                 .collect::<Vec<_>>()
                 .join(" ");
             let markdown = format!("{}\n\n{second}", words(400));
-            let (state, cx) = window(&markdown, Container::Scrollable, cx);
+            let (state, cx) = &mut window(&markdown, Container::Scrollable);
             reveal(&state, "v399", cx);
             assert_eq!(scroll_top(&state, cx).item_ix, 1);
             // The end of the first paragraph, on the separator after it.
@@ -3031,21 +3057,21 @@ mod tests {
             });
         }
 
-        #[gpui::test]
-        fn revealing_a_visible_block_does_not_scroll(cx: &mut TestAppContext) {
+        #[test]
+        fn revealing_a_visible_block_does_not_scroll() {
             let markdown = format!("{}\n\n<div>html</div>\n\n{}", words(400), words(400));
-            let (state, cx) = window(&markdown, Container::Scrollable, cx);
+            let (state, cx) = &mut window(&markdown, Container::Scrollable);
             reveal(&state, "html", cx);
             // Still in view a little further down.
-            state.update(cx, |state, _| state.list_state.scroll_by(px(30.)));
+            cx.update(&state, |state, _| state.list_state.scroll_by(px(30.)));
             draw(cx);
             let top = scroll_top(&state, cx);
             reveal(&state, "html", cx);
             assert_unmoved(&state, top, cx);
         }
 
-        #[gpui::test]
-        fn a_line_of_an_inline_flow_counts_as_shown_once_scrolled_to(cx: &mut TestAppContext) {
+        #[test]
+        fn a_line_of_an_inline_flow_counts_as_shown_once_scrolled_to() {
             // Inline code every tenth word, so the rows are taller than the
             // body line and land between pixels.
             let markdown = (0..400)
@@ -3058,47 +3084,45 @@ mod tests {
                 })
                 .collect::<Vec<_>>()
                 .join(" ");
-            let (state, cx) = window(&markdown, Container::Scrollable, cx);
+            let (state, cx) = &mut window(&markdown, Container::Scrollable);
             reveal(&state, "c390", cx);
             assert!(!is_pending(&state, cx));
             assert!(scroll_top(&state, cx).offset_in_item > px(1000.));
         }
 
-        #[gpui::test]
-        fn a_range_starting_on_a_line_break_reveals_the_next_line(cx: &mut TestAppContext) {
+        #[test]
+        fn a_range_starting_on_a_line_break_reveals_the_next_line() {
             let code = (0..200)
                 .map(|ix| format!("line {ix}"))
                 .collect::<Vec<_>>()
                 .join("\n");
-            let (state, cx) = window(&format!("```\n{code}\n```"), Container::Scrollable, cx);
+            let (state, cx) = &mut window(&format!("```\n{code}\n```"), Container::Scrollable);
             reveal(&state, "\nline 190", cx);
             assert!(!is_pending(&state, cx));
             let top = scroll_top(&state, cx);
             assert!(top.offset_in_item > px(1000.), "{top:?}");
         }
 
-        #[gpui::test]
-        fn a_range_starting_on_a_line_break_in_an_inline_flow_reveals_the_next_line(
-            cx: &mut TestAppContext,
-        ) {
+        #[test]
+        fn a_range_starting_on_a_line_break_in_an_inline_flow_reveals_the_next_line() {
             // Inline code lays the paragraph out as an inline flow.
             let lines = (0..200)
                 .map(|ix| format!("line {ix} `code`"))
                 .collect::<Vec<_>>()
                 .join("\\\n");
-            let (state, cx) = window(&lines, Container::Scrollable, cx);
+            let (state, cx) = &mut window(&lines, Container::Scrollable);
             reveal(&state, "\nline 190", cx);
             assert!(!is_pending(&state, cx));
             let top = scroll_top(&state, cx);
             assert!(top.offset_in_item > px(1000.), "{top:?}");
         }
 
-        #[gpui::test]
-        fn a_reveal_is_dropped_when_its_text_before_it_changes(cx: &mut TestAppContext) {
-            let (state, cx) = window(&paragraphs(200), Container::Scrollable, cx);
+        #[test]
+        fn a_reveal_is_dropped_when_its_text_before_it_changes() {
+            let (state, cx) = &mut window(&paragraphs(200), Container::Scrollable);
             let target = "first words then the target";
             let markdown = format!("{target}\n\n{}", paragraphs(200));
-            state.update(cx, |state, cx| state.set_text(&markdown, cx));
+            cx.update(&state, |state, cx| state.set_text(&markdown, cx));
             cx.run_until_parked();
 
             // Appending to its paragraph keeps it.
@@ -3113,19 +3137,19 @@ mod tests {
             });
         }
 
-        #[gpui::test]
-        fn a_clamped_view_does_not_reveal(cx: &mut TestAppContext) {
+        #[test]
+        fn a_clamped_view_does_not_reveal() {
             let outer = ListState::new(2, ListAlignment::Top, px(1000.));
-            let (state, cx) = window(&words(400), Container::Clamped(outer.clone()), cx);
+            let (state, cx) = &mut window(&words(400), Container::Clamped(outer.clone()));
             reveal(&state, "w390", cx);
             assert!(!is_pending(&state, cx));
             assert_eq!(outer.logical_scroll_top().item_ix, 0);
         }
 
-        #[gpui::test]
-        fn text_outside_every_block_reveals_its_block(cx: &mut TestAppContext) {
+        #[test]
+        fn text_outside_every_block_reveals_its_block() {
             let markdown = format!("{}\n\n<div>html text</div>", paragraphs(100));
-            let (state, cx) = window(&markdown, Container::Scrollable, cx);
+            let (state, cx) = &mut window(&markdown, Container::Scrollable);
             reveal(&state, "html text", cx);
             assert!(!is_pending(&state, cx));
             assert!(
@@ -3135,9 +3159,9 @@ mod tests {
             );
         }
 
-        #[gpui::test]
-        fn a_reveal_follows_its_text_past_an_edit_before_it(cx: &mut TestAppContext) {
-            let (state, cx) = window(&paragraphs(200), Container::Scrollable, cx);
+        #[test]
+        fn a_reveal_follows_its_text_past_an_edit_before_it() {
+            let (state, cx) = &mut window(&paragraphs(200), Container::Scrollable);
             // An inserted paragraph moves the target down one block.
             request(&state, "paragraph 150", cx, |state, cx| {
                 state.set_text(&format!("inserted\n\n{}", paragraphs(200)), cx);

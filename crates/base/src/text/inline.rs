@@ -875,9 +875,13 @@ impl Element for Inline {
             None => StyledText::new(self.text.clone()).with_runs(runs.clone()),
         };
         self.retained_key = Some((runs, text_style));
-        let (layout_id, _) =
-            self.styled_text
-                .request_layout(global_element_id, inspector_id, window, cx);
+        let layout_id = crate::request_text_layout(
+            &mut self.styled_text,
+            global_element_id,
+            inspector_id,
+            window,
+            cx,
+        );
 
         (layout_id, ())
     }
@@ -1362,8 +1366,22 @@ mod line_bounds_tests {
     };
     use gpui::{AvailableSpace, TestApp, size};
 
+    /// Where the character walk placed `index`. GPUI's `position_for_index`
+    /// placed an index at a soft wrap at the end of the row before it when
+    /// the walk was written; it now places it at the start of the next row,
+    /// where a caret attached to the following character goes. A caret
+    /// attached to the preceding character keeps the walk's placement.
+    fn walk_position(text_layout: &TextLayout, index: usize) -> Option<Point<Pixels>> {
+        let line = text_layout.line_layout_for_index(index)?;
+        let position = line.visual_position_for_caret(
+            CaretPosition::attached_to_previous_cluster(index),
+            text_layout.line_height(),
+        )?;
+        Some(text_layout.bounds().origin + position)
+    }
+
     /// The character walk this replaced, kept as the oracle: one box per
-    /// character from `position_for_index`, unioned per row.
+    /// character from its position, unioned per row.
     fn by_character(
         text: &str,
         text_layout: &TextLayout,
@@ -1376,12 +1394,12 @@ mod line_bounds_tests {
         let mut offset = 0;
         for c in text.chars() {
             let next_offset = offset + c.len_utf8();
-            let Some(pos) = text_layout.position_for_index(offset) else {
+            let Some(pos) = walk_position(text_layout, offset) else {
                 offset = next_offset;
                 continue;
             };
             let mut char_width = line_height.half();
-            if let Some(next_pos) = text_layout.position_for_index(next_offset)
+            if let Some(next_pos) = walk_position(text_layout, next_offset)
                 && next_pos.y == pos.y
             {
                 char_width = next_pos.x - pos.x;
@@ -1714,169 +1732,7 @@ pub(super) mod test_draw {
 
 #[cfg(test)]
 pub(super) mod test_fonts {
-    use gpui::{
-        Bounds, DevicePixels, Font, FontId, FontMetrics, FontRun, FontWeight, GlyphId, LineLayout,
-        Pixels, PlatformTextSystem, RenderGlyphParams, ShapedGlyph, ShapedRun, Size,
-        TextRenderingMode, point, px, size,
-    };
-    use std::{borrow::Cow, cell::RefCell};
-
-    pub(crate) const BODY: &str = "Body";
-    pub(crate) const MONO: &str = "Mono";
-    const BODY_ID: FontId = FontId(1);
-    const MONO_ID: FontId = FontId(2);
-    const BOLD_BODY_ID: FontId = FontId(3);
-    const BOLD_MONO_ID: FontId = FontId(4);
-    const UNITS_PER_EM: f32 = 1000.;
-
-    pub(crate) struct WideMonoTextSystem;
-
-    impl WideMonoTextSystem {
-        /// Advance of one glyph in `font_id`, in em units.
-        fn advance_units(font_id: FontId) -> f32 {
-            match font_id {
-                MONO_ID => 1000.,
-                BOLD_MONO_ID => 1250.,
-                BODY_ID => 500.,
-                BOLD_BODY_ID => 750.,
-                _ => 500.,
-            }
-        }
-
-        /// Width of `text` shaped entirely in `family` at `font_size`.
-        pub(crate) fn width_of(text: &str, family: &str, font_size: Pixels) -> Pixels {
-            let font_id = if family == MONO { MONO_ID } else { BODY_ID };
-            font_size * (Self::advance_units(font_id) / UNITS_PER_EM) * text.chars().count() as f32
-        }
-    }
-
-    impl PlatformTextSystem for WideMonoTextSystem {
-        fn add_fonts(&self, _fonts: Vec<Cow<'static, [u8]>>) -> anyhow::Result<()> {
-            Ok(())
-        }
-
-        fn all_font_names(&self) -> Vec<String> {
-            vec![BODY.into(), MONO.into()]
-        }
-
-        fn font_id(&self, descriptor: &Font) -> anyhow::Result<FontId> {
-            Ok(
-                match (
-                    descriptor.family.as_ref() == MONO,
-                    descriptor.weight == FontWeight::BOLD,
-                ) {
-                    (true, true) => BOLD_MONO_ID,
-                    (true, false) => MONO_ID,
-                    (false, true) => BOLD_BODY_ID,
-                    (false, false) => BODY_ID,
-                },
-            )
-        }
-
-        fn font_metrics(&self, _font_id: FontId) -> FontMetrics {
-            FontMetrics {
-                units_per_em: UNITS_PER_EM as u32,
-                ascent: 800.,
-                descent: -200.,
-                line_gap: 0.,
-                underline_position: -100.,
-                underline_thickness: 50.,
-                cap_height: 700.,
-                x_height: 500.,
-                bounding_box: Bounds {
-                    origin: point(0., -200.),
-                    size: size(1000., 1000.),
-                },
-            }
-        }
-
-        fn typographic_bounds(
-            &self,
-            font_id: FontId,
-            _glyph_id: GlyphId,
-        ) -> anyhow::Result<Bounds<f32>> {
-            Ok(Bounds {
-                origin: point(0., 0.),
-                size: size(Self::advance_units(font_id), 700.),
-            })
-        }
-
-        fn advance(&self, font_id: FontId, _glyph_id: GlyphId) -> anyhow::Result<Size<f32>> {
-            Ok(size(Self::advance_units(font_id), 0.))
-        }
-
-        fn glyph_for_char(&self, _font_id: FontId, ch: char) -> Option<GlyphId> {
-            Some(GlyphId(ch as u32))
-        }
-
-        fn glyph_raster_bounds(
-            &self,
-            _params: &RenderGlyphParams,
-        ) -> anyhow::Result<Bounds<DevicePixels>> {
-            Ok(Bounds::default())
-        }
-
-        fn rasterize_glyph(
-            &self,
-            _params: &RenderGlyphParams,
-            raster_bounds: Bounds<DevicePixels>,
-        ) -> anyhow::Result<(Size<DevicePixels>, Vec<u8>)> {
-            Ok((raster_bounds.size, Vec::new()))
-        }
-
-        fn layout_line(&self, text: &str, font_size: Pixels, runs: &[FontRun]) -> LineLayout {
-            thread_local! {
-                static SHAPED_LINE_RECORDER: RefCell<Option<Vec<String>>> =
-                    const { RefCell::new(None) };
-            }
-            SHAPED_LINE_RECORDER.with(|recorder| {
-                if let Some(lines) = recorder.borrow_mut().as_mut() {
-                    lines.push(text.to_string());
-                }
-            });
-
-            let mut position = px(0.);
-            let mut shaped_runs = Vec::new();
-            let mut run_start = 0;
-            for run in runs {
-                let run_text = &text[run_start..run_start + run.len];
-                let advance = font_size * (Self::advance_units(run.font_id) / UNITS_PER_EM);
-                let mut glyphs = Vec::new();
-                for (ix, ch) in run_text.char_indices() {
-                    glyphs.push(ShapedGlyph {
-                        id: GlyphId(ch as u32),
-                        position: point(position, px(0.)),
-                        index: run_start + ix,
-                        is_emoji: false,
-                    });
-                    position += advance;
-                }
-                shaped_runs.push(ShapedRun {
-                    font_id: run.font_id,
-                    glyphs,
-                });
-                run_start += run.len;
-            }
-            let metrics = self.font_metrics(BODY_ID);
-            LineLayout {
-                font_size,
-                width: position,
-                ascent: font_size * (metrics.ascent / UNITS_PER_EM),
-                // Native backends normalize the signed font metric for shaped lines.
-                descent: font_size * (-metrics.descent / UNITS_PER_EM),
-                runs: shaped_runs,
-                len: text.len(),
-            }
-        }
-
-        fn recommended_rendering_mode(
-            &self,
-            _font_id: FontId,
-            _font_size: Pixels,
-        ) -> TextRenderingMode {
-            TextRenderingMode::Grayscale
-        }
-    }
+    pub(crate) use crate::test_text_system::{BODY, MONO, WideMonoTextSystem};
 }
 
 #[cfg(test)]

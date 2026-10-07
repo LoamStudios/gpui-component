@@ -506,8 +506,8 @@ mod tests {
         assert!(cx.debug_bounds("focus-ring").is_none());
     }
 
-    #[gpui::test]
-    fn long_labels_preserve_track_size_in_narrow_containers(cx: &mut TestAppContext) {
+    #[test]
+    fn long_labels_preserve_track_size_in_narrow_containers() {
         struct NarrowSwitch {
             size: Size,
             checked: bool,
@@ -529,6 +529,11 @@ mod tests {
             }
         }
 
+        // The label wraps, and GPUI's own test text system lays every
+        // paragraph out on one row.
+        let mut cx = gpui::HeadlessAppContext::new(std::sync::Arc::new(
+            gpui_base::test_text_system::WideMonoTextSystem,
+        ));
         cx.update(crate::init);
         for (size, width, height) in [
             (Size::Small, 28., 16.),
@@ -537,16 +542,23 @@ mod tests {
         ] {
             for checked in [false, true] {
                 for disabled in [false, true] {
-                    let (_, cx) = cx.add_window_view(move |_, _| NarrowSwitch {
-                        size,
-                        checked,
-                        disabled,
-                    });
-                    cx.update(|window, cx| window.draw(cx).clear(cx));
+                    let window = cx
+                        .open_window(gpui::size(px(800.), px(600.)), move |_, cx| {
+                            gpui::AppContext::new(cx, |_| NarrowSwitch {
+                                size,
+                                checked,
+                                disabled,
+                            })
+                        })
+                        .unwrap()
+                        .into();
+                    cx.update_window(window, |_, window, cx| window.draw(cx).clear(cx))
+                        .unwrap();
 
-                    let container = cx.debug_bounds("narrow-switch").unwrap();
-                    let track = cx.debug_bounds("switch-bar").unwrap();
-                    let label = cx.debug_bounds("switch-label").unwrap();
+                    let mut bounds = |selector| cx.debug_bounds(window, selector).unwrap().unwrap();
+                    let container = bounds("narrow-switch");
+                    let track = bounds("switch-bar");
+                    let label = bounds("switch-label");
                     assert_eq!(track.size.width, px(width), "the track must not shrink");
                     assert_eq!(track.size.height, px(height));
                     assert!(label.origin.x >= track.right());

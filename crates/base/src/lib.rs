@@ -106,7 +106,7 @@ pub use dialog::{
     Dialog, DialogBackdrop, DialogChangeReason, DialogClose, DialogDescription, DialogHandle,
     DialogPopup, DialogTitle, DialogTrigger,
 };
-pub use element_ext::ElementExt;
+pub use element_ext::{ElementExt, request_text_layout};
 pub use event::{InteractiveElementExt, OngoingScrollExt};
 pub use focus_trap::FocusTrapElement;
 #[doc(hidden)]
@@ -246,3 +246,5 @@ pub fn init(cx: &mut App) {
 
 #[cfg(feature = "test-support")]
 pub mod test_support;
+#[cfg(any(test, feature = "test-text-system"))]
+pub mod test_text_system;

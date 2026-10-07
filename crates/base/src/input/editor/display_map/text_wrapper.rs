@@ -1375,14 +1375,28 @@ mod tests {
         );
     }
 
-    #[test]
-    fn clicking_past_a_wrapped_row_keeps_the_caret_on_that_row() {
-        // One buffer line wrapped into two visual rows, splitting at byte 10.
+    #[gpui::test]
+    fn clicking_past_a_wrapped_row_keeps_the_caret_on_that_row(cx: &mut gpui::TestAppContext) {
+        // One buffer line wrapped into two visual rows, splitting at byte 10. The rows are
+        // shaped: a click is resolved against the glyphs of the row under it.
+        let rows = cx.add_empty_window().update(|window, _| {
+            ["0123456789", "abcde"].map(|text| {
+                let run = gpui::TextRun {
+                    len: text.len(),
+                    font: gpui::font("Test"),
+                    color: Default::default(),
+                    background_color: None,
+                    underline: None,
+                    strikethrough: None,
+                    letter_spacing: None,
+                };
+                window
+                    .text_system()
+                    .shape_line(text.into(), px(16.), &[run])
+            })
+        });
         let mut line_layout = LineLayout::new();
-        line_layout.set_wrapped_lines(smallvec::smallvec![
-            ShapedLine::default().with_len(10),
-            ShapedLine::default().with_len(5),
-        ]);
+        line_layout.set_wrapped_lines(rows.into_iter().collect());
         let last_layout = test_last_layout(px(20.));
 
         // Clicking past the last glyph of the first row resolves to the wrap boundary, which is

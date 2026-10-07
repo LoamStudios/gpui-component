@@ -36,6 +36,9 @@ fn a_root_renders_the_layers_a_plain_view_leaves_out(cx: &mut TestAppContext) {
         open_and_notify(window, cx);
     })
     .unwrap();
+    // The dialog fades in over its entrance, timed by the executor's clock.
+    cx.executor()
+        .advance_clock(*gpui_kit::component::dialog::ANIMATION_DURATION);
     cx.update_window(handle.into(), |_, window, cx| {
         window.render_frame(cx);
         assert!(
@@ -63,6 +66,9 @@ fn open_window_wraps_the_view_in_a_root_and_returns_the_view(cx: &mut TestAppCon
         open_and_notify(window, cx);
     })
     .unwrap();
+    // The dialog fades in over its entrance, timed by the executor's clock.
+    cx.executor()
+        .advance_clock(*gpui_kit::component::dialog::ANIMATION_DURATION);
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
         assert!(window.find("dialog").visible());

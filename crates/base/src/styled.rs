@@ -1,6 +1,6 @@
 use gpui::{
-    App, BoxShadow, Corners, DefiniteLength, Div, Edges, FocusHandle, Hsla, Pixels,
-    Refineable as _, Role, StyleRefinement, Styled, Window, div, hsla, point,
+    App, BoxShadow, Corners, DefiniteLength, Div, Edges, FocusHandle, Hsla, Pixels, Role, Styled,
+    Window, div, hsla, point,
 };
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]

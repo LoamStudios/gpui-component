@@ -219,6 +219,7 @@ windows = { workspace = true, features = [
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }
+gpui-base = { workspace = true, features = ["test-text-system"] }
 indoc = "2"
 
 [lints]

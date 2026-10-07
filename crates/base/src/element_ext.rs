@@ -29,3 +29,22 @@ pub trait ElementExt: ParentElement + Sized {
 }
 
 impl<T: ParentElement> ElementExt for T {}
+
+/// Requests the layout of `text` in a layout node of its own, for an element
+/// that reads the text's [`gpui::TextLayout`].
+///
+/// A block element takes text among its children into its own inline
+/// paragraph and lays it out there, and the text's own layout is never
+/// measured: hit testing, selection and highlights read from it then panic.
+/// The node returned is not text, so a block keeps it whole, as a block
+/// child, and the text in it is measured as it is anywhere else.
+pub fn request_text_layout(
+    text: &mut gpui::StyledText,
+    id: Option<&gpui::GlobalElementId>,
+    inspector_id: Option<&gpui::InspectorElementId>,
+    window: &mut Window,
+    cx: &mut App,
+) -> gpui::LayoutId {
+    let (text_layout_id, ()) = gpui::Element::request_layout(text, id, inspector_id, window, cx);
+    window.request_layout(gpui::Style::default(), [text_layout_id], cx)
+}

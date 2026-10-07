@@ -361,8 +361,9 @@ impl Element for ShimmerGlyphs {
         window: &mut Window,
         cx: &mut App,
     ) -> (LayoutId, Self::RequestLayoutState) {
-        self.text
-            .request_layout(global_id, inspector_id, window, cx)
+        let layout_id =
+            gpui_base::request_text_layout(&mut self.text, global_id, inspector_id, window, cx);
+        (layout_id, ())
     }
 
     fn prepaint(

@@ -2803,6 +2803,54 @@ mod tests {
         rc::Rc,
     };
 
+    /// A hitbox over `bounds`, clipped to exactly `bounds` and with a
+    /// placeholder id, as a participant registers outside a frame.
+    ///
+    /// Only `Window::insert_hitbox` makes a `Hitbox`, and only while an element
+    /// prepaints, so one is taken from a canvas drawn in a hidden scratch window
+    /// that is closed again; its public fields are then set as the test needs.
+    fn test_hitbox(bounds: Bounds<Pixels>, cx: &mut gpui::App) -> Hitbox {
+        struct HitboxProbe(Rc<RefCell<Option<Hitbox>>>);
+
+        impl Render for HitboxProbe {
+            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+                let slot = self.0.clone();
+                gpui::canvas(
+                    |bounds, window, _| window.insert_hitbox(bounds, HitboxBehavior::Normal),
+                    move |_, hitbox, _, _| *slot.borrow_mut() = Some(hitbox),
+                )
+                .size_full()
+            }
+        }
+
+        let slot = Rc::new(RefCell::new(None));
+        let probe = cx
+            .open_window(
+                gpui::WindowOptions {
+                    focus: false,
+                    show: false,
+                    ..Default::default()
+                },
+                |_, cx| cx.new(|_| HitboxProbe(slot.clone())),
+            )
+            .expect("open a scratch window");
+        // Through the untyped handle, so the probe view is not leased while
+        // the window draws it.
+        cx.update_window(probe.into(), |_, window, cx| {
+            window.draw(cx).clear(cx);
+            window.remove_window();
+        })
+        .expect("draw the scratch window");
+        let mut hitbox = slot.take().expect("the canvas inserted a hitbox");
+        hitbox.id = HitboxId::placeholder();
+        hitbox.bounds = bounds;
+        hitbox.content_mask = ContentMask {
+            bounds,
+            ..Default::default()
+        };
+        hitbox
+    }
+
     struct FakeParticipant {
         selection: TextSelectionHandle,
     }
@@ -2943,7 +2991,14 @@ mod tests {
                 .map(|(index, text)| {
                     let text = StyledText::new(text.clone());
                     self.layouts.push(text.layout().clone());
-                    div().absolute().top(px(index as f32 * 40.)).child(text)
+                    // A flex container lays the text out as a node of its
+                    // own; a block would take it into an inline paragraph
+                    // and leave its `TextLayout` unmeasured.
+                    div()
+                        .absolute()
+                        .flex()
+                        .top(px(index as f32 * 40.))
+                        .child(text)
                 })
                 .collect::<Vec<_>>();
             div().size_full().children(children)
@@ -2967,18 +3022,10 @@ mod tests {
             let bounds = Bounds::new(point(px(0.), px(y)), size(px(100.), px(10.)));
             selection_state.register_participant(
                 self.selection.clone(),
-                TextSelectionRegistration::new(
-                    Hitbox {
-                        id: HitboxId::placeholder(),
-                        bounds,
-                        content_mask: ContentMask { bounds },
-                        behavior: HitboxBehavior::Normal,
-                    },
-                    bounds,
-                )
-                .with_scope(scope)
-                .with_document_order(document_order)
-                .with_text_bounds(vec![bounds]),
+                TextSelectionRegistration::new(test_hitbox(bounds, cx), bounds)
+                    .with_scope(scope)
+                    .with_document_order(document_order)
+                    .with_text_bounds(vec![bounds]),
                 cx,
             );
         }
@@ -3127,12 +3174,7 @@ mod tests {
     #[gpui::test]
     fn public_selection_data_uses_builders_and_readers(cx: &mut TestAppContext) {
         let bounds = Bounds::new(point(px(1.), px(2.)), size(px(30.), px(10.)));
-        let hitbox = Hitbox {
-            id: HitboxId::placeholder(),
-            bounds,
-            content_mask: ContentMask { bounds },
-            behavior: HitboxBehavior::Normal,
-        };
+        let hitbox = cx.update(|cx| test_hitbox(bounds, cx));
         let scope = TextSelectionScopeId::from_raw(7);
         let endpoint = TextSelectionEndpoint::new(None, bounds.origin)
             .with_content_key(TextSelectionContentKey::new(11));
@@ -3937,16 +3979,8 @@ mod tests {
                 state.update(cx, |state, cx| {
                     state.register_participant(
                         participant.selection.clone(),
-                        TextSelectionRegistration::new(
-                            Hitbox {
-                                id: HitboxId::placeholder(),
-                                bounds: collapsed,
-                                content_mask: ContentMask { bounds: collapsed },
-                                behavior: HitboxBehavior::Normal,
-                            },
-                            collapsed,
-                        )
-                        .with_text_bounds(vec![collapsed]),
+                        TextSelectionRegistration::new(test_hitbox(collapsed, cx), collapsed)
+                            .with_text_bounds(vec![collapsed]),
                         cx,
                     );
                     state.update_in_window(point(px(1.), px(50.)), window, cx);
@@ -4100,12 +4134,7 @@ mod tests {
             let selection = TextSelectionHandle::new("registered", cx);
             selection.set_local_selection(true, cx);
             let bounds = Bounds::new(point(px(0.), px(0.)), size(px(100.), px(20.)));
-            let hitbox = Hitbox {
-                id: HitboxId::placeholder(),
-                bounds,
-                content_mask: ContentMask { bounds },
-                behavior: HitboxBehavior::Normal,
-            };
+            let hitbox = test_hitbox(bounds, cx);
             selection.register(
                 TextSelectionRegistration::new(hitbox, bounds).with_text_bounds(vec![bounds]),
                 window,

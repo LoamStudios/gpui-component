@@ -70,8 +70,9 @@ mod tests {
             window: &mut Window,
             cx: &mut App,
         ) -> (LayoutId, Self::RequestLayoutState) {
-            self.styled_text
-                .request_layout(id, inspector_id, window, cx)
+            let layout_id =
+                gpui_base::request_text_layout(&mut self.styled_text, id, inspector_id, window, cx);
+            (layout_id, ())
         }
 
         fn prepaint(

@@ -14,7 +14,7 @@ use gpui::{
 use markdown::mdast;
 
 use crate::{
-    StyledExt, h_flex,
+    h_flex,
     scrollable_mask::horizontal_scroll_area,
     text::{
         CodeBlockActionsFn, CodeBlockHighlighterFn, LinkClickHandlerFn, MarkdownExtensions,

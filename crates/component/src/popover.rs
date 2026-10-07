@@ -972,10 +972,8 @@ mod tests {
         window.update(|window, cx| window.draw(cx).clear(cx));
         let opening = window.debug_bounds("surface").unwrap().origin;
 
-        // The animation runs off the wall clock, so settling is waited out
-        // rather than stepped. Several times the duration leaves room for a
-        // loaded machine.
-        std::thread::sleep(DROPDOWN_ENTER_DURATION * 4);
+        // The animation runs off the executor's clock, which a test steps.
+        window.executor().advance_clock(DROPDOWN_ENTER_DURATION * 4);
         window.update(|window, cx| window.draw(cx).clear(cx));
         let settled = window.debug_bounds("surface").unwrap().origin;
 
